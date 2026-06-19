@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Pilot - Smart Application Autofill",
+  "version": "1.0.0",
+  "description": "Autofills job application forms automatically without relying on paid APIs.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "unlimitedStorage",
+    "alarms"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "storage/profile-store.js",
+        "storage/indexeddb-store.js",
+        "storage/sync-queue-store.js",
+        "content/field-extractor.js",
+        "content/classifier.js",
+        "content/autofill-engine.js",
+        "content/fuzzy-select-matcher.js",
+        "content/file-upload-handler.js",
+        "content/mutation-observer.js",
+        "content/shadow-overlay.js",
+        "content/dataset-collector.js",
+        "content/content-script.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "options_ui": {
+    "page": "settings/settings.html",
+    "open_in_tab": true
+  }
+}

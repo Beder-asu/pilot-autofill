@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Pilot Settings</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="header-nav">
+    <div class="header-content">
+      <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px; color: #FFA000;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> Pilot Settings</h2>
+      <div class="theme-switch-wrapper">
+        <label class="theme-switch" for="checkbox-theme">
+          <input type="checkbox" id="checkbox-theme" />
+          <div class="slider round">
+            <span class="icon-light"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #FF9500;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg></span>
+            <span class="icon-dark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #5E5CE6;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></span>
+          </div>
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class="main-content">
+    <div id="onboarding-banner" style="display: none; background: #E5F1FF; color: #007AFF; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+      <h3 style="margin: 0 0 8px 0; font-size: 20px;">Welcome to Pilot! <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-left: 6px; color: #FF2D55;"><path d="M5.8 11.3 2 22l10.7-3.79"></path><path d="M4 3h.01"></path><path d="M22 8h.01"></path><path d="M15 2h.01"></path><path d="M22 20h.01"></path><path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"></path><path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17"></path><path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.91 9 5.52 9 6.23V7"></path><path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"></path></svg></h3>
+      <p style="margin: 0; font-size: 15px; line-height: 1.5;">To get started, we highly recommend using the <strong><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; color: #AF52DE;"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"></path><path d="m14 7 3 3"></path><path d="M5 6v4"></path><path d="M19 14v4"></path><path d="M10 2v2"></path><path d="M7 8H3"></path><path d="M21 16h-4"></path><path d="M11 3H9"></path></svg> Autofill from Resume</strong> button below to instantly populate your profile. You can also turn on the new <strong>Auto-Fill Automatically</strong> setting in the Preferences tab to never click a button again!</p>
+    </div>
+    <section class="card" id="section-personal">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+        <h3 style="margin: 0;">Personal Info</h3>
+        <button id="btn-autofill-resume" style="font-size: 13px; padding: 6px 14px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-card); cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; transition: all 0.2s;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #AF52DE;"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"></path><path d="m14 7 3 3"></path><path d="M5 6v4"></path><path d="M19 14v4"></path><path d="M10 2v2"></path><path d="M7 8H3"></path><path d="M21 16h-4"></path><path d="M11 3H9"></path></svg> Autofill from Resume</button>
+      </div>
+      <div class="form-grid-3">
+        <label>First Name <input type="text" id="firstName"></label>
+        <label>Middle Name <input type="text" id="middleName"></label>
+        <label>Last Name <input type="text" id="lastName"></label>
+      </div>
+      <label>Preferred Name <input type="text" id="preferredName"></label>
+      
+      <div class="form-grid-2">
+        <label>Email <input type="email" id="email"></label>
+        <label>Phone <input type="text" id="phone"></label>
+      </div>
+      
+      <div class="form-grid-2">
+        <label>Birthday <input type="date" id="birthday"></label>
+        <label>Pronouns <input type="text" id="pronouns" placeholder="e.g. He/Him, She/Her"></label>
+      </div>
+      
+      <h4 style="margin-top: 16px; margin-bottom: 12px;">Diversity Data (EEO)</h4>
+      <div class="form-grid-2">
+        <label>Gender <input type="text" id="gender" placeholder="e.g. Male, Female, Non-binary"></label>
+        <label>Ethnicity <input type="text" id="ethnicity" placeholder="e.g. Hispanic, White, Asian"></label>
+      </div>
+      <div class="form-grid-2">
+        <label>Veteran Status <input type="text" id="veteranStatus" placeholder="e.g. I am not a protected veteran"></label>
+        <label>Disability Status <input type="text" id="disabilityStatus" placeholder="e.g. No, I do not have a disability"></label>
+      </div>
+    </section>
+    
+    <section class="card" id="section-professional">
+      <h3>Professional</h3>
+      <div class="form-grid-3">
+        <label>LinkedIn <input type="url" id="linkedin"></label>
+        <label>GitHub <input type="url" id="github"></label>
+        <label>Portfolio <input type="url" id="portfolio"></label>
+      </div>
+      <div class="form-grid-3">
+        <label>Current Company <input type="text" id="currentCompany"></label>
+        <label>Current Title <input type="text" id="currentTitle"></label>
+        <label>Years of Experience <input type="number" id="yearsOfExperience"></label>
+      </div>
+    </section>
+
+    <section class="card" id="section-education">
+      <h3>Education</h3>
+      <div class="form-grid-2">
+        <label>University <input type="text" id="university"></label>
+        <label>Faculty <input type="text" id="faculty" placeholder="e.g. Faculty of Engineering"></label>
+      </div>
+      <div class="form-grid-2">
+        <label>Degree <input type="text" id="degree"></label>
+        <label>Field of Study <input type="text" id="fieldOfStudy"></label>
+      </div>
+      <div class="form-grid-3">
+        <label>Student Level 
+          <select id="studentLevel">
+            <option value="">-- Select --</option>
+            <option value="Freshman">Freshman</option>
+            <option value="Sophomore">Sophomore</option>
+            <option value="Junior">Junior</option>
+            <option value="Senior">Senior</option>
+            <option value="Master's Student">Master's Student</option>
+            <option value="PhD Candidate">PhD Candidate</option>
+            <option value="Graduated">Graduated / Alumni</option>
+          </select>
+        </label>
+        <label>GPA <input type="text" id="gpa" placeholder="e.g. 3.8/4.0"></label>
+        <label>Graduation Year <input type="number" id="graduationYear"></label>
+      </div>
+    </section>
+
+    <section class="card" id="section-preferences">
+      <h3>Preferences</h3>
+      
+      <div style="background: var(--bg-main); padding: 16px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border-color);">
+        <label style="margin-bottom: 4px; color: var(--text-main); font-weight: 600;">Auto-Fill Forms Automatically</label>
+        <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 12px 0;">If enabled, Pilot will instantly fill forms upon page load without waiting for you to click.</p>
+        <label class="switch" style="display: inline-block; position: relative; width: 44px; height: 24px; margin: 0;">
+          <input type="checkbox" id="autoFillMode" style="opacity: 0; width: 0; height: 0;">
+          <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;">
+            <span style="position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="form-grid-3">
+        <label>Salary Expectation <input type="text" id="salaryExpectation"></label>
+        <label>Start Date <input type="text" id="startDate"></label>
+        <label>Notice Period <input type="text" id="noticePeriod" placeholder="e.g. 2 weeks"></label>
+      </div>
+      <div class="form-grid-3">
+        <label>Willing to Relocate 
+          <select id="relocation">
+            <option value="">-- Select --</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </label>
+        <label>Willing to Travel <input type="text" id="travelPercentage" placeholder="e.g. 20%"></label>
+        <label>Work Authorization <input type="text" id="workAuthorization" placeholder="e.g. Authorized to work"></label>
+      </div>
+      <label>Languages <input type="text" id="languages" placeholder="e.g. English, Arabic"></label>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 8px;">AI Essay Generation</h4>
+      <label>Global AI Instructions <textarea id="aiInstructions" placeholder="e.g. Keep answers concise, use a professional tone, and keep them under 200 words." style="width: 100%; height: 80px; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); font-family: inherit; resize: vertical;"></textarea></label>
+    </section>
+
+    <section class="card" id="section-files">
+      <h3>Files</h3>
+      <p>Max 15 files · PDF only · 5MB per file</p>
+      <div style="display: flex; gap: 12px; margin-bottom: 12px; align-items: center;">
+        <label>Type: 
+          <select id="fileUploadType" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border-color);">
+            <option value="RESUME">Resume</option>
+            <option value="PORTFOLIO">Portfolio</option>
+            <option value="CERTIFICATE">Certificate</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </label>
+        <label style="margin: 0; display: flex; align-items: center; gap: 6px;">
+          <input type="checkbox" id="fileUploadDefault" checked> Default
+        </label>
+      </div>
+      <input type="file" id="fileUpload" accept="application/pdf">
+      <div id="file-list" style="margin-top: 16px;"></div>
+    </section>
+
+    <section class="card" id="section-privacy">
+      <h3>Data & Privacy</h3>
+      <div class="form-grid-2" style="margin-bottom: 12px;">
+        <label>AI Provider 
+          <select id="aiProvider">
+            <option value="gemini">Google Gemini</option>
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+          </select>
+        </label>
+        <label>AI Model 
+          <select id="aiModel"></select>
+        </label>
+      </div>
+      <label>API Key (Required for Resume Parsing & Essay Gen) <input type="password" id="aiApiKey" placeholder="sk-..."></label>
+      <hr style="margin: 16px 0; border: none; border-top: 1px solid #eee;">
+      <button id="btn-export" class="secondary-btn">Export as JSON</button>
+      <button id="btn-delete" class="danger-btn" style="margin-top: 8px;">Delete All Data</button>
+    </section>
+    
+    <div class="actions" style="margin-top: 24px; text-align: center;">
+      <button id="btn-dummy" class="secondary-btn">Load Dummy Data</button>
+      <div id="save-status" style="color: #34C759; font-weight: 500; display: inline-block; margin-left: 12px; opacity: 0; transition: opacity 0.3s;">All changes saved.</div>
+    </div>
+  </div>
+
+  <!-- Resume Picker Modal -->
+  <div id="resume-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center;">
+    <div style="background: var(--bg-card); padding: 32px; border-radius: 20px; width: 360px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
+      <h3 style="margin-top: 0; font-size: 18px;">Select Resume to Parse</h3>
+      <select id="resume-select" style="width: 100%; margin-bottom: 24px;"></select>
+      <div id="resume-loading" style="display: none; color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; text-align: center;">Parsing resume...</div>
+      <div style="display: flex; justify-content: space-between; gap: 12px;">
+        <button id="btn-resume-cancel" class="secondary-btn" style="flex: 1;">Cancel</button>
+        <button id="btn-resume-start" class="primary-btn" style="flex: 1;">Parse</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../lib/pdf.min.js"></script>
+  <script src="../storage/resume-parser.js"></script>
+  <script src="../storage/profile-store.js"></script>
+  <script src="../storage/indexeddb-store.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>
