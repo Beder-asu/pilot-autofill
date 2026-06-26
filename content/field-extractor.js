@@ -100,6 +100,26 @@ globalThis.FieldExtractor = (function () {
   // Returns { inputType, primaryElement, allElements, options }
   // ---------------------------------------------------------------------------
 
+  function _getLabelFor(element) {
+    if (element.id) {
+      try {
+        const label = document.querySelector(`label[for="${CSS.escape(element.id)}"]`);
+        if (label) return label.innerText || label.textContent;
+      } catch (e) {
+        // invalid selector (e.g., dynamically generated bad IDs)
+      }
+    }
+    // Walk up the DOM to find a wrapping label
+    let parent = element.parentElement;
+    for (let i = 0; i < 3 && parent; i++) {
+      if (parent.tagName === 'LABEL') {
+        return parent.innerText || parent.textContent;
+      }
+      parent = parent.parentElement;
+    }
+    return '';
+  }
+
   function categorizeInputs(container) {
     const all = Array.from(
       container.querySelectorAll(
@@ -122,13 +142,9 @@ globalThis.FieldExtractor = (function () {
     if (radios.length > 0) {
       const options = [];
       for (const r of radios) {
-        let lbl = '';
-        if (r.id) {
-          const lel = container.querySelector(`label[for="${r.id}"]`);
-          if (lel) lbl = lel.innerText || lel.textContent;
-        }
-        if (!lbl) lbl = r.getAttribute('aria-label') || r.value || r.innerText || '';
-        options.push(lbl.trim());
+        let lbl = _getLabelFor(r);
+        if (!lbl) lbl = r.getAttribute('aria-label') || r.value || r.innerText || r.textContent || '';
+        if (lbl) options.push(lbl.trim());
       }
       
       const textInputs = all.filter(el => el.type === 'text' || el.tagName === 'TEXTAREA' || el.getAttribute('role') === 'textbox');
