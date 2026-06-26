@@ -120,12 +120,24 @@ globalThis.FieldExtractor = (function () {
     // Radio group (native or ARIA)
     const radios = all.filter(el => el.type === 'radio' || el.getAttribute('role') === 'radio');
     if (radios.length > 0) {
-      const options = radios.map(r => {
-        // Prefer the associated label text, then aria-label, then value
-        const lbl = _getLabelFor(r);
-        return lbl || r.getAttribute('aria-label') || r.value || '';
-      }).filter(Boolean);
-      return { inputType: 'radio-group', primaryElement: radios[0], allElements: radios, options };
+      const options = [];
+      for (const r of radios) {
+        let lbl = '';
+        if (r.id) {
+          const lel = container.querySelector(`label[for="${r.id}"]`);
+          if (lel) lbl = lel.innerText || lel.textContent;
+        }
+        if (!lbl) lbl = r.getAttribute('aria-label') || r.value || r.innerText || '';
+        options.push(lbl.trim());
+      }
+      
+      const textInputs = all.filter(el => el.type === 'text' || el.tagName === 'TEXTAREA' || el.getAttribute('role') === 'textbox');
+      let textInput = textInputs.length > 0 ? textInputs[0] : undefined;
+      
+      const elementsToMark = [...radios];
+      if (textInput) elementsToMark.push(textInput);
+
+      return { inputType: 'radio-group', primaryElement: radios[0], allElements: elementsToMark, options, otherTextInput: textInput };
     }
 
     // Checkbox group (multiple checkboxes → multi-select)
@@ -372,7 +384,8 @@ globalThis.FieldExtractor = (function () {
       detectedAt: new Date().toISOString(),
       // Multi-element fields (radio groups, checkbox groups)
       element: el,                   // primary element for autofill engine
-      radioElements: inputType === 'radio-group' || inputType === 'checkbox-group' ? allElements : undefined,
+      radioElements: inputType === 'radio-group' || inputType === 'checkbox-group' ? (fieldData ? fieldData.allElements.filter(e => e.type === 'radio' || e.getAttribute('role') === 'radio' || e.type === 'checkbox' || e.getAttribute('role') === 'checkbox') : allElements) : undefined,
+      otherTextInput: fieldData ? fieldData.otherTextInput : undefined,
       options: options.length ? options : undefined,
     };
   }

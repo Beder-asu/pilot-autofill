@@ -93,7 +93,7 @@ globalThis.AutofillEngine = (function() {
           const lel = document.querySelector(`label[for="${r.id}"]`);
           if (lel) lbl = (lel.innerText || lel.textContent || '').toLowerCase().trim();
         }
-        if (!lbl) lbl = (r.getAttribute('aria-label') || r.value || '').toLowerCase().trim();
+        if (!lbl) lbl = (r.getAttribute('aria-label') || r.value || r.innerText || r.textContent || (r.parentElement ? r.parentElement.innerText : '') || '').toLowerCase().trim();
 
         let score = 0;
         if (lbl === target) score = 100;
@@ -104,13 +104,56 @@ globalThis.AutofillEngine = (function() {
       }
 
       if (best && bestScore > 0) {
-        best.checked = true;
-        best.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        if (best.tagName === 'INPUT') {
+          const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "checked")?.set;
+          if (setter) setter.call(best, true);
+          else best.checked = true;
+        } else {
+          best.setAttribute('aria-checked', 'true');
+        }
+
+        // Try clicking the label instead of the hidden radio input
+        let clickTarget = best;
+        if (best.id) {
+          const lel = document.querySelector(`label[for="${best.id}"]`);
+          if (lel) clickTarget = lel;
+        } else if (best.parentElement && best.parentElement.tagName === 'LABEL') {
+          clickTarget = best.parentElement;
+        }
+
+        clickTarget.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+        clickTarget.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        clickTarget.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        clickTarget.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+        clickTarget.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
         best.dispatchEvent(new Event('change', { bubbles: true }));
         await delay(80);
         return { success: true, tier: 1 };
       }
-      // No matching option — report failure so the overlay can surface it
+      // No matching option — fallback to "Other" text input if it exists
+      if (fieldMeta && fieldMeta.otherTextInput) {
+        // Try to select an "Other" option first if we can guess it
+        const otherRadio = radios.find(r => {
+           const l = (r.getAttribute('aria-label') || r.value || r.innerText || r.textContent || (r.parentElement ? r.parentElement.innerText : '') || '').toLowerCase();
+           return l.includes('other');
+        });
+        if (otherRadio) {
+           let ct = otherRadio;
+           if (otherRadio.id) {
+              const lel = document.querySelector(`label[for="${otherRadio.id}"]`);
+              if (lel) ct = lel;
+           } else if (otherRadio.parentElement && otherRadio.parentElement.tagName === 'LABEL') {
+              ct = otherRadio.parentElement;
+           }
+           ct.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+           ct.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+           ct.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+           ct.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+           ct.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        }
+        await delay(50);
+        return await fillField(fieldMeta.otherTextInput, value, 'text', null);
+      }
       return { success: false, tier: null };
     }
 
@@ -157,7 +200,16 @@ globalThis.AutofillEngine = (function() {
 
     // Tier 1: Direct value setting + events
     element.focus();
-    element.value = value;
+    
+    // React setter hack
+    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+      const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(element), 'value')?.set;
+      if (setter) setter.call(element, value);
+      else element.value = value;
+    } else {
+      element.value = value;
+    }
+    
     element.dispatchEvent(new Event('input', { bubbles: true }));
     element.dispatchEvent(new Event('change', { bubbles: true }));
     element.blur();
