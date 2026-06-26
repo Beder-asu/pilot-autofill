@@ -76,6 +76,66 @@ globalThis.AutofillEngine = (function() {
       }
     }
 
+
+    // ── Radio group ────────────────────────────────────────────────────────────
+    // fieldMeta.radioElements holds the individual <input type="radio"> nodes.
+    // We find the one whose associated label best matches the profile value.
+    if (inputType === 'radio-group' && fieldMeta && fieldMeta.radioElements && fieldMeta.radioElements.length > 0) {
+      const target = String(value).toLowerCase().trim();
+      const radios = fieldMeta.radioElements;
+
+      // Build scored list: exact label match > startsWith > includes
+      let best = null, bestScore = -1;
+      for (const r of radios) {
+        // Label text: try explicit label, aria-label, then value attribute
+        let lbl = '';
+        if (r.id) {
+          const lel = document.querySelector(`label[for="${r.id}"]`);
+          if (lel) lbl = (lel.innerText || lel.textContent || '').toLowerCase().trim();
+        }
+        if (!lbl) lbl = (r.getAttribute('aria-label') || r.value || '').toLowerCase().trim();
+
+        let score = 0;
+        if (lbl === target) score = 100;
+        else if (lbl.startsWith(target) || target.startsWith(lbl)) score = 60;
+        else if (lbl.includes(target) || target.includes(lbl)) score = 30;
+
+        if (score > bestScore) { best = r; bestScore = score; }
+      }
+
+      if (best && bestScore > 0) {
+        best.checked = true;
+        best.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        best.dispatchEvent(new Event('change', { bubbles: true }));
+        await delay(80);
+        return { success: true, tier: 1 };
+      }
+      // No matching option — report failure so the overlay can surface it
+      return { success: false, tier: null };
+    }
+
+    // ── Checkbox group (multi-select) ──────────────────────────────────────────
+    if (inputType === 'checkbox-group' && fieldMeta && fieldMeta.radioElements) {
+      const targets = String(value).toLowerCase().split(/[,;]+/).map(s => s.trim()).filter(Boolean);
+      let any = false;
+      for (const cb of fieldMeta.radioElements) {
+        let lbl = '';
+        if (cb.id) {
+          const lel = document.querySelector(`label[for="${cb.id}"]`);
+          if (lel) lbl = (lel.innerText || lel.textContent || '').toLowerCase().trim();
+        }
+        if (!lbl) lbl = (cb.getAttribute('aria-label') || cb.value || '').toLowerCase().trim();
+        if (targets.some(t => lbl.includes(t) || t.includes(lbl))) {
+          cb.checked = true;
+          cb.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+          cb.dispatchEvent(new Event('change', { bubbles: true }));
+          any = true;
+        }
+      }
+      await delay(80);
+      return { success: any, tier: any ? 1 : null };
+    }
+
     // Dropdowns (select / combobox)
     if (element.tagName === 'SELECT' || element.getAttribute('role') === 'combobox') {
       if (element.tagName === 'SELECT') {
