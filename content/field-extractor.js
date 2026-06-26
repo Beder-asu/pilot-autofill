@@ -57,16 +57,36 @@ globalThis.FieldExtractor = (function() {
   }
 
   function getSurroundingText(element) {
+    let textChunks = [];
+    
+    // 1. Check parent hierarchy's innerText (this usually captures the MS Forms wrapper)
     let parent = element.parentElement;
     for (let i = 0; i < 4 && parent && parent.tagName !== 'BODY'; i++) {
       const text = (parent.innerText || parent.textContent || '').replace(/\s+/g, ' ').trim();
       const valText = (element.value || '').trim();
       if (text.length > 0 && (!valText || text !== valText)) {
-        return text;
+        textChunks.push(text);
+        break; // found the closest enclosing text
       }
       parent = parent.parentElement;
     }
-    return '';
+
+    // 2. Explicitly check previous siblings of the element and its parents
+    // (Helps with highly disconnected DOMs where the label is entirely outside the input wrapper)
+    let current = element;
+    for (let i = 0; i < 4 && current && current.tagName !== 'BODY'; i++) {
+      let prev = current.previousElementSibling;
+      while (prev) {
+         const text = (prev.innerText || prev.textContent || '').replace(/\s+/g, ' ').trim();
+         if (text.length > 0 && !textChunks.includes(text)) {
+           textChunks.push(text);
+         }
+         prev = prev.previousElementSibling;
+      }
+      current = current.parentElement;
+    }
+
+    return textChunks.join(' ');
   }
 
   function getFieldsetLegend(element) {
@@ -168,37 +188,85 @@ globalThis.FieldExtractor = (function() {
     const fields = pierceShadowDOM(rootNode);
     
     const extracted = [];
-    const processedRadioNames = new Set();
+    const processedElements = new Set();
+
+    // First pass: Group radio buttons by name OR by closest shared container
+    const allRadios = fields.filter(f => f.type === 'radio' || (f.getAttribute && f.getAttribute('role') === 'radio'));
+    const radioGroupsByContainer = new Map();
+    const radioGroupsByName = new Map();
+
+    for (const radio of allRadios) {
+      const sharedByName = radio.name ? allRadios.filter(r => r.name === radio.name) : [];
+      if (sharedByName.length > 1) {
+        if (!radioGroupsByName.has(radio.name)) radioGroupsByName.set(radio.name, []);
+        if (!radioGroupsByName.get(radio.name).includes(radio)) {
+           radioGroupsByName.get(radio.name).push(radio);
+        }
+      } else {
+        // Group by closest parent that contains multiple radios (usually the question wrapper or options list)
+        // Walk up to find a suitable container (up to 4 levels)
+        let container = radio.parentElement;
+        for (let i = 0; i < 4 && container; i++) {
+           const radiosInContainer = container.querySelectorAll('input[type="radio"], [role="radio"]');
+           if (radiosInContainer.length > 1) break;
+           container = container.parentElement;
+        }
+        if (container) {
+          if (!radioGroupsByContainer.has(container)) radioGroupsByContainer.set(container, []);
+          radioGroupsByContainer.get(container).push(radio);
+        } else {
+          // Fallback if no container found
+          if (!radioGroupsByContainer.has(radio)) radioGroupsByContainer.set(radio, []);
+          radioGroupsByContainer.get(radio).push(radio);
+        }
+      }
+    }
+
+    // Process named radio groups
+    for (const [name, group] of radioGroupsByName.entries()) {
+      group.forEach(r => processedElements.add(r));
+      if (group.length > 0) {
+        const baseField = await extractField(group[0]);
+        baseField.inputType = 'radio-group';
+        baseField.radioElements = group;
+        const allLabels = group.map(r => getLabelText(r) || r.innerText || r.getAttribute('aria-label') || r.value || '');
+        baseField.combinedText = (baseField.combinedText + ' ' + allLabels.join(' ')).toLowerCase().replace(/[^\w\s\u0600-\u06FF]/g, ' ').replace(/\s+/g, ' ').trim();
+        extracted.push(baseField);
+      }
+    }
+
+    // Process container-based radio groups
+    for (const [container, group] of radioGroupsByContainer.entries()) {
+      group.forEach(r => processedElements.add(r));
+      if (group.length > 0) {
+        // Use the container to extract surrounding text to get the question title
+        const baseField = await extractField(group[0]);
+        baseField.inputType = 'radio-group';
+        baseField.radioElements = group;
+        const allLabels = group.map(r => getLabelText(r) || r.innerText || r.getAttribute('aria-label') || r.value || '');
+        baseField.combinedText = (baseField.combinedText + ' ' + allLabels.join(' ')).toLowerCase().replace(/[^\w\s\u0600-\u06FF]/g, ' ').replace(/\s+/g, ' ').trim();
+        extracted.push(baseField);
+      }
+    }
 
     for (const field of fields) {
-      if (field.type === 'radio') {
-        if (!field.name || processedRadioNames.has(field.name)) continue;
-        processedRadioNames.add(field.name);
-        
-        const radioGroup = fields.filter(f => f.type === 'radio' && f.name === field.name);
-        const baseField = await extractField(radioGroup[0]);
-        
-        baseField.inputType = 'radio-group';
-        baseField.radioElements = radioGroup;
-        
-        const allLabels = radioGroup.map(r => {
-          const l = getLabelText(r);
-          return l ? l : r.value;
-        });
-        baseField.combinedText = (baseField.combinedText + ' ' + allLabels.join(' ')).toLowerCase()
-                                 .replace(/[^\w\s\u0600-\u06FF]/g, ' ')
-                                 .replace(/\s+/g, ' ').trim();
-        
-        extracted.push(baseField);
-      } else if (field.getAttribute && field.getAttribute('role') === 'radiogroup') {
+      if (processedElements.has(field)) continue;
+
+      // Skip fields that are children of a radiogroup, as they are handled by the radiogroup itself
+      const radiogroupParent = field.closest && field.closest('[role="radiogroup"], [role="group"]');
+      if (radiogroupParent && radiogroupParent !== field) {
+        continue;
+      }
+
+      if (field.getAttribute && (field.getAttribute('role') === 'radiogroup' || field.getAttribute('role') === 'group')) {
+        const radios = Array.from(field.querySelectorAll('[role="radio"], input[type="radio"]'));
+        if (radios.length === 0) continue; // Not a radiogroup if it has no radios
+        radios.forEach(r => processedElements.add(r));
         const baseField = await extractField(field);
         baseField.inputType = 'radio-group';
-        baseField.radioElements = Array.from(field.querySelectorAll('[role="radio"], input[type="radio"]'));
-        
-        const allLabels = baseField.radioElements.map(r => r.innerText || r.getAttribute('aria-label') || r.value || '');
-        baseField.combinedText = (baseField.combinedText + ' ' + allLabels.join(' ')).toLowerCase()
-                                 .replace(/[^\w\s\u0600-\u06FF]/g, ' ')
-                                 .replace(/\s+/g, ' ').trim();
+        baseField.radioElements = radios;
+        const allLabels = radios.map(r => r.innerText || r.getAttribute('aria-label') || r.value || '');
+        baseField.combinedText = (baseField.combinedText + ' ' + allLabels.join(' ')).toLowerCase().replace(/[^\w\s\u0600-\u06FF]/g, ' ').replace(/\s+/g, ' ').trim();
         extracted.push(baseField);
       } else {
         extracted.push(await extractField(field));

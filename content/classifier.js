@@ -139,6 +139,15 @@ globalThis.Classifier = (function() {
       en: ['gpa', 'grade point average', 'grade', 'cumulative gpa', 'overall gpa', 'score'],
       ar: ['المعدل التراكمي', 'التقدير', 'المعدل', 'الدرجة']
     },
+    NATIONAL_ID: {
+      en: ['national id', 'ssn', 'social security number', 'id number', 'national identity', 'cpr', 'civil id', 'aadhar', 'pan card', 'national identifier'],
+      ar: ['الرقم القومي', 'رقم الهوية', 'الهوية الوطنية', 'الرقم المدني']
+    },
+    GENDER: {
+      en: ['gender', 'sex', 'male or female'],
+      ar: ['الجنس', 'النوع'],
+      eeo: true
+    },
     SALARY_EXPECTATION: {
       en: ['salary', 'expected salary', 'desired salary', 'salary expectation', 'compensation', 'desired compensation', 'expected ctc'],
       ar: ['الراتب المتوقع', 'توقعات الراتب', 'الراتب المطلوب']
@@ -252,9 +261,19 @@ globalThis.Classifier = (function() {
             if (normText === normAlias) {
               scores[category] += WEIGHTS[source] * 1.0;
               matchedAliases[category].push({ alias, language: lang, source, weight: WEIGHTS[source] * 1.0 });
-            } else if (normText.includes(normAlias) || normText.split(' ').includes(normAlias)) {
-              scores[category] += WEIGHTS[source] * 0.6;
-              matchedAliases[category].push({ alias, language: lang, source, weight: WEIGHTS[source] * 0.6 });
+            } else {
+              const words = normText.split(/\s+/);
+              const aliasWords = normAlias.split(/\s+/);
+              let isMatch = false;
+              if (aliasWords.length === 1) {
+                isMatch = words.includes(aliasWords[0]);
+              } else {
+                isMatch = normText.includes(` ${normAlias} `) || normText.startsWith(`${normAlias} `) || normText.endsWith(` ${normAlias}`);
+              }
+              if (isMatch) {
+                scores[category] += WEIGHTS[source] * 0.6;
+                matchedAliases[category].push({ alias, language: lang, source, weight: WEIGHTS[source] * 0.6 });
+              }
             }
           });
         });

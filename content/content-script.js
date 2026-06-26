@@ -31,6 +31,21 @@ async function processFields(fieldsToProcess, onReviewDismiss) {
   const profile = await globalThis.ProfileStore.getProfile();
   let fieldsToReview = [];
   
+  // === DEBUG DOM DUMP ===
+  setTimeout(() => {
+    const htmlDump = [];
+    const radios = document.querySelectorAll('input[type="radio"], input[role="radio"], [role="radio"]');
+    if(radios.length > 0) {
+       let current = radios[0];
+       for(let i=0; i<8; i++) {
+           htmlDump.push(`${current.tagName} (role=${current.getAttribute('role')}, type=${current.getAttribute('type')}, name=${current.getAttribute('name')}, class=${current.className})`);
+           current = current.parentElement;
+           if(!current) break;
+       }
+    }
+    console.log("HTML_DUMP_START:" + JSON.stringify(htmlDump) + ":HTML_DUMP_END");
+  }, 5000);
+  
   for (const f of fieldsToProcess) {
     if (filledElements.has(f.element)) continue;
     
@@ -204,7 +219,7 @@ function isStrictATSDomain() {
   const url = window.location.href.toLowerCase();
 
   // Explicitly exclude Google Forms and similar generic form hosts
-  const genericHosts = ['docs.google.com', 'forms.gle', 'typeform.com', 'surveymonkey.com', 'jotform.com', 'forms.office.com', 'airtable.com'];
+  const genericHosts = ['docs.google.com', 'forms.gle', 'typeform.com', 'surveymonkey.com', 'jotform.com', 'forms.office.com', 'forms.cloud.microsoft', 'airtable.com'];
   if (genericHosts.some(h => url.includes(h))) return false;
 
   try {
