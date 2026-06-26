@@ -172,11 +172,6 @@ globalThis.Classifier = (function() {
       en: ['language', 'languages', 'languages spoken', 'language proficiency'],
       ar: ['اللغات', 'اللغات التي تجيدها', 'إجادة اللغات']
     },
-    GENDER: {
-      en: ['gender', 'sex', 'gender identity'],
-      ar: ['الجنس', 'النوع الاجتماعي'],
-      eeo: true
-    },
     ETHNICITY: {
       en: ['ethnicity', 'race', 'racial identity', 'ethnic background'],
       ar: ['العرق', 'الجنسية الأصلية'],
