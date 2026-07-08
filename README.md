@@ -1,4 +1,4 @@
-# 🚀 Pilot Autofill
+# <img src="https://api.iconify.design/mdi:rocket-launch.svg?color=%23007AFF" width="28" height="28" align="bottom"> Pilot Autofill
 
 **The smartest, most resilient job application autofill extension.**
 
@@ -6,7 +6,7 @@ Pilot Autofill isn't just another form filler. It's a deep-DOM traversing, React
 
 ---
 
-## 📖 The Journey: How We Got Here
+## <img src="https://api.iconify.design/mdi:book-open-page-variant.svg?color=%231D1D1F" width="24" height="24" align="bottom"> The Journey: How We Got Here
 
 Building a universal form filler is hard. Modern web applications don't use standard HTML forms anymore. They use heavily nested `<div>` structures, virtual DOMs, Shadow DOMs, and synthetic event systems that actively block programmatic interaction.
 
@@ -17,17 +17,17 @@ We tried multiple approaches:
 
 ---
 
-## ✨ Core Features
+## <img src="https://api.iconify.design/mdi:creation.svg?color=%231D1D1F" width="24" height="24" align="bottom"> Core Features
 
-- **🧠 Dual-Parser Engine:** Combines an Accessibility Parser (for modern, ARIA-compliant forms) with a Semantic Fallback Parser (for legacy forms).
-- **🛡️ React & Framework Defeater:** Modern React apps ignore `.value = "x"`. Pilot Autofill intercepts native setters and dispatches raw `PointerEvent` and `MouseEvent` synthetic events to simulate real human interaction.
-- **🔦 Shadow DOM Piercing:** Seamlessly enters closed/open Shadow Roots to find and fill inputs that other extensions can't even see.
-- **🌍 Bilingual Classification:** Understands both English and Arabic form fields with a highly tuned alias dictionary.
-- **🤖 AI Essay Generation:** Integrated directly with Gemini & OpenAI to read essay questions (e.g., "Why do you want to work here?") and generate tailored answers on the fly based on your profile.
+- <img src="https://api.iconify.design/mdi:brain.svg?color=%23007AFF" width="18" height="18" align="bottom"> **Dual-Parser Engine:** Combines an Accessibility Parser (for modern, ARIA-compliant forms) with a Semantic Fallback Parser (for legacy forms).
+- <img src="https://api.iconify.design/mdi:shield-check.svg?color=%2334C759" width="18" height="18" align="bottom"> **React & Framework Defeater:** Modern React apps ignore `.value = "x"`. Pilot Autofill intercepts native setters and dispatches raw `PointerEvent` and `MouseEvent` synthetic events to simulate real human interaction.
+- <img src="https://api.iconify.design/mdi:flashlight.svg?color=%23FF9500" width="18" height="18" align="bottom"> **Shadow DOM Piercing:** Seamlessly enters closed/open Shadow Roots to find and fill inputs that other extensions can't even see.
+- <img src="https://api.iconify.design/mdi:earth.svg?color=%235AC8FA" width="18" height="18" align="bottom"> **Bilingual Classification:** Understands both English and Arabic form fields with a highly tuned alias dictionary.
+- <img src="https://api.iconify.design/mdi:robot-outline.svg?color=%235E5CE6" width="18" height="18" align="bottom"> **AI Essay Generation:** Integrated directly with Gemini & OpenAI to read essay questions (e.g., "Why do you want to work here?") and generate tailored answers on the fly based on your profile.
 
 ---
 
-## 🛠️ Getting Started (Installation)
+## <img src="https://api.iconify.design/mdi:tools.svg?color=%231D1D1F" width="24" height="24" align="bottom"> Getting Started (Installation)
 
 Pilot Autofill is a Chrome Extension. To install it locally for development:
 
@@ -45,7 +45,7 @@ Pilot Autofill is a Chrome Extension. To install it locally for development:
 
 ---
 
-## 🎯 How to Use It
+## <img src="https://api.iconify.design/mdi:bullseye-arrow.svg?color=%231D1D1F" width="24" height="24" align="bottom"> How to Use It
 
 ### Step 1: Set Up Your Profile
 1. Click the Pilot Autofill icon in your Chrome toolbar.
@@ -63,12 +63,12 @@ Pilot Autofill is a Chrome Extension. To install it locally for development:
 High-confidence fields (like First Name, Email, Phone) are filled instantly. For complex or ambiguous fields, the beautiful **Review Panel** slides in.
 
 - **Accept / Skip:** Quickly review the AI's suggestions and accept or skip them.
-- **✨ Generate with AI:** For essay questions or cover letters, simply select the `ESSAY_QUESTION` category from the dropdown, add any custom notes (optional), and click **Generate with AI**. The extension will write the essay based on your profile and inject it into the text box.
+- **Generate with AI:** For essay questions or cover letters, simply select the `ESSAY_QUESTION` category from the dropdown, add any custom notes (optional), and click **Generate with AI**. The extension will write the essay based on your profile and inject it into the text box.
 - **Fill Confirmed:** Once you're happy with the panel, click Fill Confirmed to dispatch the final events and complete the form.
 
 ---
 
-## 🏗️ Technical Architecture
+## <img src="https://api.iconify.design/mdi:domain.svg?color=%231D1D1F" width="24" height="24" align="bottom"> Technical Architecture
 
 Under the hood, Pilot Autofill operates in distinct phases:
 
