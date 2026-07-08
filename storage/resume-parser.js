@@ -168,40 +168,57 @@ globalThis.ResumeParser = (function () {
   }
 
   async function runLLMExtraction(text, apiKey, provider, model) {
-    const prompt = `
-You are an expert resume parser. Extract the following information from the resume text provided below. 
-Format your output EXACTLY as a JSON object matching this schema:
-{
-  "personal": {
-    "firstName": "string",
-    "lastName": "string",
-    "email": "string",
-    "phone": "string",
-    "address": { "line1": "string", "line2": "string", "city": "string", "state": "string", "zip": "string", "country": "string" }
-  },
-  "professional": {
-    "linkedin": "string",
-    "github": "string",
-    "portfolio": "string",
-    "currentCompany": "string",
-    "currentTitle": "string",
-    "yearsOfExperience": 0
-  },
-  "education": {
-    "university": "string",
-    "degree": "string",
-    "fieldOfStudy": "string",
-    "graduationYear": 0
-  }
-}
+    const prompt = `You are an expert resume parser. Extract information from the resume text provided below. If a field is not found, use an empty string or 0 for numbers.\n\nResume Text:\n"""\n${text}\n"""`;
 
-Return ONLY the raw JSON object. Do not include markdown formatting or backticks. If a field is not found, use an empty string or 0 for numbers.
+    const standardJsonSchema = {
+      type: "object",
+      properties: {
+        personal: {
+          type: "object",
+          properties: {
+            firstName: { type: "string" }, lastName: { type: "string" }, email: { type: "string" }, phone: { type: "string" },
+            address: { type: "object", properties: { line1: { type: "string" }, line2: { type: "string" }, city: { type: "string" }, state: { type: "string" }, zip: { type: "string" }, country: { type: "string" } }, required: ["line1", "line2", "city", "state", "zip", "country"], additionalProperties: false }
+          },
+          required: ["firstName", "lastName", "email", "phone", "address"],
+          additionalProperties: false
+        },
+        professional: {
+          type: "object",
+          properties: { linkedin: { type: "string" }, github: { type: "string" }, portfolio: { type: "string" }, currentCompany: { type: "string" }, currentTitle: { type: "string" }, yearsOfExperience: { type: "integer" } },
+          required: ["linkedin", "github", "portfolio", "currentCompany", "currentTitle", "yearsOfExperience"],
+          additionalProperties: false
+        },
+        education: {
+          type: "object",
+          properties: { university: { type: "string" }, degree: { type: "string" }, fieldOfStudy: { type: "string" }, graduationYear: { type: "integer" } },
+          required: ["university", "degree", "fieldOfStudy", "graduationYear"],
+          additionalProperties: false
+        }
+      },
+      required: ["personal", "professional", "education"],
+      additionalProperties: false
+    };
 
-Resume Text:
-"""
-${text}
-"""
-    `;
+    const geminiSchema = {
+      type: "OBJECT",
+      properties: {
+        personal: {
+          type: "OBJECT",
+          properties: {
+            firstName: { type: "STRING" }, lastName: { type: "STRING" }, email: { type: "STRING" }, phone: { type: "STRING" },
+            address: { type: "OBJECT", properties: { line1: { type: "STRING" }, line2: { type: "STRING" }, city: { type: "STRING" }, state: { type: "STRING" }, zip: { type: "STRING" }, country: { type: "STRING" } } }
+          }
+        },
+        professional: {
+          type: "OBJECT",
+          properties: { linkedin: { type: "STRING" }, github: { type: "STRING" }, portfolio: { type: "STRING" }, currentCompany: { type: "STRING" }, currentTitle: { type: "STRING" }, yearsOfExperience: { type: "INTEGER" } }
+        },
+        education: {
+          type: "OBJECT",
+          properties: { university: { type: "STRING" }, degree: { type: "STRING" }, fieldOfStudy: { type: "STRING" }, graduationYear: { type: "INTEGER" } }
+        }
+      }
+    };
 
     try {
       let rawJson = '';
@@ -212,10 +229,17 @@ ${text}
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.1 }
+            generationConfig: { 
+              temperature: 0.1,
+              responseMimeType: "application/json",
+              responseSchema: geminiSchema
+            }
           })
         });
-        if (!response.ok) throw new Error(`Gemini API Error: ${response.status}`);
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Gemini API Error: ${response.status} - ${errText}`);
+        }
         const data = await response.json();
         rawJson = data.candidates[0].content.parts[0].text;
         
@@ -229,7 +253,15 @@ ${text}
           body: JSON.stringify({
             model: model,
             messages: [{ role: 'user', content: prompt }],
-            temperature: 0.1
+            temperature: 0.1,
+            response_format: {
+              type: "json_schema",
+              json_schema: {
+                name: "resume_extraction",
+                strict: true,
+                schema: standardJsonSchema
+              }
+            }
           })
         });
         if (!response.ok) throw new Error(`OpenAI API Error: ${response.status}`);
@@ -249,15 +281,29 @@ ${text}
             model: model,
             max_tokens: 1024,
             messages: [{ role: 'user', content: prompt }],
-            temperature: 0.1
+            temperature: 0.1,
+            tools: [
+              {
+                name: "extract_resume",
+                description: "Extracts structured data from a resume",
+                input_schema: standardJsonSchema
+              }
+            ],
+            tool_choice: { type: "tool", name: "extract_resume" }
           })
         });
         if (!response.ok) throw new Error(`Anthropic API Error: ${response.status}`);
         const data = await response.json();
-        rawJson = data.content[0].text;
+        // Anthropic returns the tool call arguments as JSON
+        const toolCall = data.content.find(block => block.type === 'tool_use');
+        if (toolCall) {
+          rawJson = JSON.stringify(toolCall.input);
+        } else {
+          throw new Error('Anthropic did not return a tool call');
+        }
       }
 
-      rawJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+      // Safe parse since APIs are now strictly typed
       return JSON.parse(rawJson);
     } catch (e) {
       console.error('[ResumeParser] LLM extraction failed:', e);
