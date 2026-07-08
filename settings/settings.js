@@ -345,3 +345,19 @@ document.getElementById('btn-resume-start').addEventListener('click', async () =
     document.getElementById('btn-resume-start').disabled = false;
   }
 });
+
+document.getElementById('btn-delete').addEventListener('click', async () => {
+  if (confirm('Are you sure you want to delete all your data? This will clear your profile, files, and settings permanently.')) {
+    try {
+      if (globalThis.ProfileStore) await globalThis.ProfileStore.clearProfile();
+      if (globalThis.IndexedDBStore) await globalThis.IndexedDBStore.clearAllData();
+      chrome.storage.local.clear(() => {
+        alert('All data deleted successfully.');
+        window.location.reload();
+      });
+    } catch (e) {
+      console.error(e);
+      alert('Failed to delete some data.');
+    }
+  }
+});
