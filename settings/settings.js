@@ -17,7 +17,16 @@ function debouncedSave() {
 let currentProfile = {};
 
 const AI_MODELS = {
-  gemini: ['gemini-2.5-flash', 'gemini-2.5-pro'],
+  gemini: [
+    'gemini-2.5-flash',
+    'gemini-3.1-flash-lite',          // 500 RPD free tier — recommended
+    'gemini-2.5-flash-lite-preview-06-17',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-8b',
+    'gemini-2.5-pro',
+  ],
   openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'],
   anthropic: ['claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'claude-3-haiku-20240307']
 };

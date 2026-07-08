@@ -2,6 +2,7 @@ const SESSION_ID = crypto.randomUUID();
 console.log('[AutoFill] Content script loaded. Session ID:', SESSION_ID);
 
 let pageFields = [];
+let hasUserInitiatedFill = false;
 
 const filledElements = new WeakSet();
 
@@ -88,12 +89,12 @@ async function processFields(fieldsToProcess, onReviewDismiss) {
 
 
 async function orchestrateFill() {
-  const extracted = await globalThis.FieldExtractor.scanFormFields();
-  pageFields = extracted.map(f => ({
+  const extracted = await globalThis.AutofillEngine.extractFields();
+  pageFields = await Promise.all(extracted.map(async f => ({
     fieldMeta: f,
-    classification: globalThis.Classifier.classify(f),
+    classification: await globalThis.BaseClassifier.classify(f),
     element: f.element
-  }));
+  })));
 
   // Re-inject the floating widget once the review panel is dismissed
   // (or immediately if there is nothing to review).
@@ -178,6 +179,7 @@ function injectFloatingWidget() {
 
   btn.onclick = () => {
     btn.textContent = 'Filling...';
+    hasUserInitiatedFill = true;
     orchestrateFill().then(() => {
       host.remove();
       widgetInjected = false;
@@ -195,6 +197,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   
   if (request.action === 'FILL_ALL') {
+    hasUserInitiatedFill = true;
     orchestrateFill();
     sendResponse({ success: true });
     return true;
@@ -272,24 +275,36 @@ function init() {
 
   globalThis.FormMutationObserver.setCallback(async (newFields) => {
     if (newFields === 'FULL') {
-      await orchestrateFill();
+      if (hasUserInitiatedFill) {
+         await orchestrateFill();
+      } else {
+         const extracted = await globalThis.AutofillEngine.extractFields();
+         pageFields = await Promise.all(extracted.map(async f => ({
+           fieldMeta: f,
+           classification: await globalThis.BaseClassifier.classify(f),
+           element: f.element
+         })));
+         injectFloatingWidget();
+      }
     } else if (Array.isArray(newFields) && newFields.length > 0) {
-      const extractedFields = newFields.map(f => ({
+      const extractedFields = await Promise.all(newFields.map(async f => ({
         fieldMeta: f,
-        classification: globalThis.Classifier.classify(f),
+        classification: await globalThis.BaseClassifier.classify(f),
         element: f.element
-      }));
+      })));
       pageFields = pageFields.concat(extractedFields);
-      await processFields(extractedFields);
+      if (hasUserInitiatedFill) {
+         await processFields(extractedFields);
+      }
     }
   });
   
-  globalThis.FieldExtractor.scanFormFields().then(extracted => {
-    pageFields = extracted.map(f => ({
+  globalThis.AutofillEngine.extractFields().then(async extracted => {
+    pageFields = await Promise.all(extracted.map(async f => ({
       fieldMeta: f,
-      classification: globalThis.Classifier.classify(f),
+      classification: await globalThis.BaseClassifier.classify(f),
       element: f.element
-    }));
+    })));
 
     console.log(`[AutoFill] Scanned ${pageFields.length} fields.`);
 
@@ -301,6 +316,7 @@ function init() {
         const shouldAutoFill = res.autoFillMode && isStrictATSDomain();
         console.log(`[AutoFill] autoFillMode=${res.autoFillMode}, isStrictATS=${isStrictATSDomain()}, shouldAutoFill=${shouldAutoFill}`);
         if (shouldAutoFill) {
+          hasUserInitiatedFill = true;
           orchestrateFill();
         } else {
           injectFloatingWidget();

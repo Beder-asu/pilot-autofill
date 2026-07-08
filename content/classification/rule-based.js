@@ -1,4 +1,4 @@
-globalThis.Classifier = (function() {
+globalThis.RuleBasedClassifier = (function() {
   const ALIAS_DICTIONARY = {
     FIRST_NAME: {
       en: ['first name', 'firstname', 'fname', 'given name', 'givenname', 'first', 'forename', 'legal first name', 'name (first)', 'your first name'],
@@ -39,7 +39,7 @@ globalThis.Classifier = (function() {
       autocomplete: 'email'
     },
     PHONE: {
-      en: ['phone', 'phone number', 'phonenumber', 'mobile', 'mobile number', 'cell', 'cell phone', 'telephone', 'telephone number', 'contact number', 'contact phone', 'preferred contact number', 'best number', 'reach you at', 'tel'],
+      en: ['phone', 'phone number', 'phonenumber', 'mobile', 'mobile number', 'cell', 'cell phone', 'telephone', 'telephone number', 'contact number', 'contact phone', 'preferred contact number', 'best number', 'tel'],
       ar: ['رقم الهاتف', 'الهاتف', 'موبايل', 'جوال', 'رقم التواصل', 'رقم الجوال', 'رقم المحمول', 'هاتفك'],
       autocomplete: 'tel'
     },
@@ -69,7 +69,7 @@ globalThis.Classifier = (function() {
       autocomplete: 'postal-code'
     },
     COUNTRY: {
-      en: ['country', 'country of residence', 'nation'],
+      en: ['country', 'country of residence', 'nation', 'nationality'],
       ar: ['الدولة', 'بلدك', 'جنسيتك', 'بلد الإقامة'],
       autocomplete: 'country'
     },
@@ -91,69 +91,90 @@ globalThis.Classifier = (function() {
       type: 'file'
     },
     COVER_LETTER_TEXT: {
-      en: ['cover letter', 'covering letter', 'motivation letter', 'statement of purpose', 'why do you want to work here', 'tell us about yourself', 'additional information'],
+      en: ['cover letter', 'covering letter', 'motivation letter', 'statement of purpose', 'additional information'],
       ar: ['خطاب التقديم', 'رسالة التحفيز', 'عني', 'سيرة ذاتية قصيرة']
     },
     ESSAY_QUESTION: {
-      en: ['why do you want', 'describe a time', 'tell us about a time', 'explain', 'how did you', 'what is your', 'essay', 'short answer', 'anything else'],
-      ar: ['لماذا ترغب', 'صف موقفا', 'حدثنا عن', 'اشرح', 'كيف قمت', 'ما هو', 'مقالة', 'إجابة قصيرة', 'أي شيء آخر']
+      en: [
+        'why do you want to work', 'why are you interested', 'why do you want to join',
+        'describe a time', 'tell us about a time', 'tell us about yourself',
+        'how did you handle', 'how did you overcome',
+        'what motivates you', 'what are your strengths', 'what are your weaknesses',
+        'what do you bring to', 'what can you contribute', 'what drives you',
+        'describe your experience with', 'describe your background',
+        'please provide details', 'additional comments',
+        'short answer', 'tell us more',
+        'why should we hire you', 'where do you see yourself',
+        'describe a challenge', 'describe a situation'
+      ],
+      ar: [
+        'لماذا ترغب في العمل', 'لماذا أنت مهتم', 'لماذا تريد الانضمام',
+        'صف موقفاً', 'حدثنا عن وقت', 'حدثنا عن نفسك',
+        'كيف تعاملت مع', 'ما الذي يحفزك',
+        'ما هي نقاط قوتك', 'ما هي نقاط ضعفك',
+        'ما الذي يمكنك تقديمه', 'صف خلفيتك',
+        'معلومات إضافية', 'تعليقات إضافية', 'إجابة قصيرة',
+        'لماذا يجب أن نختارك', 'أين ترى نفسك'
+      ]
     },
     YEARS_OF_EXPERIENCE: {
-      en: ['years of experience', 'experience', 'years experience', 'total experience', 'how many years', 'work experience (years)'],
+      en: ['years of experience', 'years experience', 'total experience', 'how many years', 'work experience (years)', 'experience (years)'],
       ar: ['سنوات الخبرة', 'خبرتك', 'عدد سنوات الخبرة']
     },
     CURRENT_COMPANY: {
       en: ['current company', 'current employer', 'company name', 'employer', 'organization', 'where do you work', 'current workplace'],
-      ar: ['جهة العمل الحالية', 'اسم الشركة', 'الشركة الحالية']
+      ar: ['جهة العمل الحالية', 'اسم الشركة', 'الشركة الحالية'],
+      autocomplete: 'organization'
     },
     CURRENT_TITLE: {
       en: ['current title', 'job title', 'current position', 'current role', 'title', 'position title', 'your title'],
-      ar: ['المسمى الوظيفي', 'وظيفتك الحالية', 'المنصب الحالي']
+      ar: ['المسمى الوظيفي', 'وظيفتك الحالية', 'المنصب الحالي'],
+      autocomplete: 'organization-title'
     },
     GRADUATION_YEAR: {
-      en: ['graduation year', 'year of graduation', 'expected graduation', 'graduating year', 'grad year'],
-      ar: ['سنة التخرج', 'عام التخرج', 'تاريخ التخرج']
+      en: ['graduation year', 'year of graduation', 'expected graduation', 'graduating year', 'grad year', 'expected graduation year'],
+      ar: ['سنة التخرج', 'عام التخرج', 'تاريخ التخرج', 'سنة التخرج المتوقعة', 'متوقع التخرج']
     },
     DEGREE: {
-      en: ['degree', 'highest degree', 'level of education', 'qualification', 'degree earned'],
-      ar: ['الدرجة العلمية', 'المؤهل', 'درجة التعليم']
+      en: ['degree', 'highest degree', 'level of education', 'qualification', 'degree earned', 'education level'],
+      ar: ['الدرجة العلمية', 'المؤهل', 'درجة التعليم', 'المؤهل العلمي']
     },
     UNIVERSITY: {
       autocomplete: 'organization',
       en: ['university', 'college', 'school', 'institution', 'alma mater', 'attended university', 'where did you study'],
-      ar: ['الجامعة', 'الكلية', 'المؤسسة التعليمية']
+      ar: ['الجامعة', 'الكلية', 'المؤسسة التعليمية', 'جامعتك']
     },
     FACULTY: {
       en: ['faculty', 'school of', 'college of', 'department'],
-      ar: ['الكلية', 'كلية', 'القسم']
+      ar: ['الكلية', 'كلية', 'القسم', 'كلية الهندسة', 'كلية الحاسبات', 'كلية الطب', 'كلية العلوم']
     },
     FIELD_OF_STUDY: {
       en: ['field of study', 'major', 'area of study', 'concentration', 'discipline', 'degree subject', 'studied'],
-      ar: ['التخصص', 'مجال الدراسة', 'تخصصك']
+      ar: ['التخصص', 'مجال الدراسة', 'تخصصك', 'تخصص الحاسبات', 'علوم الحاسب', 'نظم المعلومات', 'تخصصي']
     },
     STUDENT_LEVEL: {
-      en: ['student level', 'academic year', 'current year', 'year of study', 'class standing', 'classification', 'academic standing'],
-      ar: ['السنة الدراسية', 'المستوى الدراسي', 'الفرقة']
+      en: ['student level', 'academic year', 'current year', 'year of study', 'class standing', 'classification', 'academic standing', 'year in school'],
+      ar: ['السنة الدراسية', 'المستوى الدراسي', 'الفرقة', 'فرقة أولى', 'فرقة ثانية', 'فرقة ثالثة', 'فرقة رابعة', 'سنة أولى', 'سنة ثانية', 'سنة ثالثة', 'سنة رابعة', 'الفرقة الدراسية']
     },
     GPA: {
       en: ['gpa', 'grade point average', 'grade', 'cumulative gpa', 'overall gpa', 'score'],
-      ar: ['المعدل التراكمي', 'التقدير', 'المعدل', 'الدرجة']
+      ar: ['المعدل التراكمي', 'التقدير', 'المعدل', 'الدرجة', 'التقدير العام', 'تقديرك']
     },
     NATIONAL_ID: {
       en: ['national id', 'ssn', 'social security number', 'id number', 'national identity', 'cpr', 'civil id', 'aadhar', 'pan card', 'national identifier'],
       ar: ['الرقم القومي', 'رقم الهوية', 'الهوية الوطنية', 'الرقم المدني']
     },
     GENDER: {
-      en: ['gender', 'sex', 'male or female'],
-      ar: ['الجنس', 'النوع'],
+      en: ['gender', 'sex', 'gender identity', 'male or female', 'sex assigned at birth'],
+      ar: ['الجنس', 'النوع الاجتماعي', 'ذكر أم أنثى'],
       eeo: true
     },
     SALARY_EXPECTATION: {
-      en: ['salary', 'expected salary', 'desired salary', 'salary expectation', 'compensation', 'desired compensation', 'expected ctc'],
+      en: ['salary', 'expected salary', 'desired salary', 'salary expectation', 'compensation', 'desired compensation', 'expected ctc', 'salary range'],
       ar: ['الراتب المتوقع', 'توقعات الراتب', 'الراتب المطلوب']
     },
     START_DATE: {
-      en: ['start date', 'available start', 'when can you start', 'earliest start', 'availability', 'join date'],
+      en: ['start date', 'available start', 'when can you start', 'earliest start', 'availability', 'join date', 'available from'],
       ar: ['تاريخ البدء', 'متى يمكنك البدء', 'موعد الالتحاق']
     },
     NOTICE_PERIOD: {
@@ -172,10 +193,9 @@ globalThis.Classifier = (function() {
       en: ['language', 'languages', 'languages spoken', 'language proficiency'],
       ar: ['اللغات', 'اللغات التي تجيدها', 'إجادة اللغات']
     },
-    GENDER: {
-      en: ['gender', 'sex', 'gender identity'],
-      ar: ['الجنس', 'النوع الاجتماعي'],
-      eeo: true
+    SKILLS: {
+      en: ['skills', 'technical skills', 'core skills', 'competencies', 'areas of expertise', 'proficiencies', 'tools', 'technologies'],
+      ar: ['المهارات', 'المهارات التقنية', 'الكفاءات', 'مجالات الخبرة']
     },
     ETHNICITY: {
       en: ['ethnicity', 'race', 'racial identity', 'ethnic background'],
@@ -199,6 +219,10 @@ globalThis.Classifier = (function() {
     REFERRAL: {
       en: ['referral', 'referred by', 'how did you hear', 'how did you find', 'source', 'heard about us'],
       ar: ['كيف عرفت عنا', 'مصدر المعرفة', 'من أحالك']
+    },
+    REFERRAL_NAME: {
+      en: ['referred by name', 'referral name', 'who referred you', 'name of referrer', 'name of person who referred'],
+      ar: ['اسم من أحالك', 'اسم المرشح', 'اسم المحيل']
     }
   };
 
@@ -214,18 +238,46 @@ globalThis.Classifier = (function() {
     surroundingText: 40
   };
 
+  // Regex pre-pass: definitive structural signals that bypass alias scoring
+  const REGEX_RULES = [
+    { pattern: /^[\w.%+-]+@[\w.-]+\.[A-Za-z]{2,}$/, category: 'EMAIL' },
+    { pattern: /^\+?[\d\s\-().]{7,15}$/, category: 'PHONE' },
+    { pattern: /^\d{4}$/, category: 'GRADUATION_YEAR' },
+    { pattern: /linkedin\.com/i, category: 'LINKEDIN' },
+    { pattern: /github\.com/i, category: 'GITHUB' },
+  ];
+
+  // Normalize camelCase, snake_case, kebab-case to space-separated lowercase
+  function normalizeHtmlAttr(text) {
+    if (!text || typeof text !== 'string') return '';
+    return text
+      .replace(/([a-z])([A-Z])/g, '$1 $2')   // camelCase → spaced
+      .replace(/[-_]+/g, ' ')                 // snake_case / kebab-case → spaced
+      .toLowerCase()
+      .trim();
+  }
+
   function classify(fieldMeta) {
     if (fieldMeta.inputType === 'file') {
       return buildResult(fieldMeta, 'RESUME', 1.0, 'HIGH', 'overlay_file');
     }
 
+    // ── Regex pre-pass ──────────────────────────────────────────────────────
+    const testValues = [fieldMeta.placeholder, fieldMeta.value].filter(Boolean);
+    for (const { pattern, category } of REGEX_RULES) {
+      if (testValues.some(v => pattern.test(v.trim()))) {
+        return buildResult(fieldMeta, category, 0.95, 'HIGH', 'autofill');
+      }
+    }
+
+    // ── Alias scoring loop ──────────────────────────────────────────────────
     const scores = {};
     const matchedAliases = {};
 
     for (const [category, dict] of Object.entries(ALIAS_DICTIONARY)) {
       scores[category] = 0;
       matchedAliases[category] = [];
-      
+
       if (dict.autocomplete && (fieldMeta.autocomplete || '').toLowerCase().split(/\s+/).includes(dict.autocomplete)) {
         scores[category] += WEIGHTS.autocomplete;
         matchedAliases[category].push({ alias: dict.autocomplete, language: 'en', source: 'autocomplete', weight: WEIGHTS.autocomplete });
@@ -239,18 +291,19 @@ globalThis.Classifier = (function() {
         if (!dict[lang]) return;
         dict[lang].forEach(alias => {
           const normAlias = alias.toLowerCase().replace(/[^\w\s\u0600-\u06FF]/g, ' ').replace(/\s+/g, ' ').trim();
-          
+
           const testSources = [
             { source: 'labelText', text: fieldMeta.labelText },
             { source: 'ariaLabel', text: fieldMeta.ariaLabel },
             { source: 'ariaLabelledby', text: fieldMeta.ariaLabelledby },
             { source: 'placeholder', text: fieldMeta.placeholder },
-            { source: 'name', text: fieldMeta.name },
-            { source: 'id', text: fieldMeta.id },
+            // Apply camelCase normalization to name and id before matching
+            { source: 'name', text: normalizeHtmlAttr(fieldMeta.name) },
+            { source: 'id', text: normalizeHtmlAttr(fieldMeta.id) },
             { source: 'surroundingText', text: fieldMeta.surroundingText }
           ];
 
-          Object.values(fieldMeta.dataAttributes).forEach(val => {
+          Object.values(fieldMeta.dataAttributes || {}).forEach(val => {
             testSources.push({ source: 'dataAttributes', text: val });
           });
 
@@ -268,7 +321,7 @@ globalThis.Classifier = (function() {
               if (aliasWords.length === 1) {
                 isMatch = words.includes(aliasWords[0]);
               } else {
-                isMatch = normText.includes(` ${normAlias} `) || normText.startsWith(`${normAlias} `) || normText.endsWith(` ${normAlias}`);
+                isMatch = normText.includes(` ${normAlias} `) || normText.startsWith(`${normAlias} `) || normText.endsWith(` ${normAlias}`) || normText === normAlias;
               }
               if (isMatch) {
                 scores[category] += WEIGHTS[source] * 0.6;
@@ -278,50 +331,68 @@ globalThis.Classifier = (function() {
           });
         });
       });
-      
+
       // Heuristic boost for Textareas for Cover Letter & Essay questions
-      if ((category === 'ESSAY_QUESTION' || category === 'COVER_LETTER_TEXT') && 
+      if ((category === 'ESSAY_QUESTION' || category === 'COVER_LETTER_TEXT') &&
           (fieldMeta.tagName === 'TEXTAREA' || fieldMeta.inputType === 'contenteditable')) {
         if (scores[category] > 0) {
-           scores[category] += 15;
+          scores[category] += 20;
         }
       }
     }
 
+    // ── InputType guards ────────────────────────────────────────────────────
+    // Radio/checkbox groups should never match text-only categories
+    if (fieldMeta.inputType === 'radio-group' || fieldMeta.inputType === 'checkbox-group') {
+      const TEXT_ONLY = ['ESSAY_QUESTION', 'COVER_LETTER_TEXT', 'EMAIL', 'PHONE', 'ADDRESS_LINE_1', 'LINKEDIN', 'GITHUB', 'NATIONAL_ID'];
+      TEXT_ONLY.forEach(cat => { scores[cat] = 0; });
+    }
+    // SELECT elements should not score as essay/cover letter
+    if (fieldMeta.tagName === 'SELECT') {
+      scores['ESSAY_QUESTION'] = 0;
+      scores['COVER_LETTER_TEXT'] = 0;
+    }
+
+    // ── Results ─────────────────────────────────────────────────────────────
     const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
     const topCategory = sorted[0][0];
     const topScore = sorted[0][1];
-    
+
+    // Textarea with zero score → treat as a likely essay rather than hard UNKNOWN
     if (topScore === 0) {
+      if (fieldMeta.tagName === 'TEXTAREA' || fieldMeta.inputType === 'contenteditable') {
+        return buildResult(fieldMeta, 'ESSAY_QUESTION', 0.3, 'LOW', 'overlay_cover_letter');
+      }
       return buildResult(fieldMeta, 'UNKNOWN', 0, 'UNKNOWN', 'overlay');
     }
 
     let confidence = Math.min(topScore / 100, 1.0);
-    
+
     let runnerUpCategory = sorted[1] ? sorted[1][0] : null;
-    let runnerUpScore = sorted[1] ? sorted[1][1] : null;
+    let runnerUpScore = sorted[1] ? sorted[1][1] : 0;
 
+    // Tighter confidence bands
     let band = 'LOW';
-    if (confidence >= 0.75) band = 'HIGH';
-    else if (confidence >= 0.40) band = 'MEDIUM';
+    if (confidence >= 0.80) band = 'HIGH';
+    else if (confidence >= 0.45) band = 'MEDIUM';
 
-    if (runnerUpScore && (topScore - runnerUpScore) <= 5) {
-      band = 'MEDIUM'; 
+    // Tighter ambiguity penalty: runner-up within 15% of top score → downgrade to MEDIUM
+    if (runnerUpScore > 0 && (topScore - runnerUpScore) / topScore <= 0.15) {
+      if (band === 'HIGH') band = 'MEDIUM';
     }
 
     let fillRoute = 'autofill';
     if (band === 'MEDIUM' || band === 'LOW') fillRoute = 'overlay';
     if (topCategory === 'RESUME') fillRoute = 'overlay_file';
     if (topCategory === 'COVER_LETTER_TEXT' || topCategory === 'ESSAY_QUESTION') fillRoute = 'overlay_cover_letter';
-    if (ALIAS_DICTIONARY[topCategory].eeo) fillRoute = 'overlay_eeo';
+    if (ALIAS_DICTIONARY[topCategory] && ALIAS_DICTIONARY[topCategory].eeo) fillRoute = 'overlay_eeo';
 
-    if (band === 'HIGH' && fillRoute === 'autofill') fillRoute = 'autofill';
     if (fieldMeta.element && fieldMeta.element.readOnly) {
-       if (topCategory === 'BIRTHDAY' || topCategory === 'START_DATE') {
-         fillRoute = 'overlay_cover_letter';
-       } else if (fillRoute === 'autofill') {
-         fillRoute = 'overlay'; 
-       }
+      if (topCategory === 'BIRTHDAY' || topCategory === 'START_DATE') {
+        fillRoute = 'overlay_cover_letter';
+      } else if (fillRoute === 'autofill') {
+        fillRoute = 'overlay';
+      }
     }
 
     return {

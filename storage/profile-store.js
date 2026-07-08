@@ -50,7 +50,7 @@ globalThis.ProfileStore = {
         address: { line1: '', line2: '', city: '', state: '', zip: '', country: '' }
       },
       professional: {
-        linkedin: '', github: '', portfolio: '', currentCompany: '', currentTitle: '', yearsOfExperience: 0
+        linkedin: '', github: '', portfolio: '', currentCompany: '', currentTitle: '', yearsOfExperience: 0, skills: ''
       },
       education: {
         university: '', degree: '', faculty: '', fieldOfStudy: '', studentLevel: '', gpa: '', graduationYear: null

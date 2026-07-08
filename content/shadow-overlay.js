@@ -15,7 +15,7 @@ globalThis.ShadowOverlay = (function() {
     'CURRENT_COMPANY','CURRENT_TITLE','YEARS_OF_EXPERIENCE',
     'UNIVERSITY','FACULTY','DEGREE','FIELD_OF_STUDY','STUDENT_LEVEL','GPA','GRADUATION_YEAR',
     'SALARY_EXPECTATION','START_DATE','NOTICE_PERIOD','RELOCATION','TRAVEL_PERCENTAGE',
-    'LANGUAGES','WORK_AUTHORIZATION','REFERRAL',
+    'LANGUAGES','WORK_AUTHORIZATION','SKILLS','REFERRAL','REFERRAL_NAME',
     'LINKEDIN','GITHUB','PORTFOLIO',
     'ESSAY_QUESTION','COVER_LETTER_TEXT'
   ];
@@ -62,6 +62,7 @@ globalThis.ShadowOverlay = (function() {
       item.addEventListener('mousedown', e => {
         e.preventDefault();
         inputEl.value = cat;
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
         catDropdownPortal.style.display = 'none';
       });
       catDropdownPortal.appendChild(item);
@@ -360,33 +361,36 @@ globalThis.ShadowOverlay = (function() {
         searchRow.appendChild(input);
         controlsWrapper.appendChild(searchRow);
         
-        if (f.classification.fillRoute === 'overlay_eeo' || f.classification.fillRoute === 'overlay_cover_letter') {
-          if (f.fieldMeta.tagName === 'TEXTAREA' || f.fieldMeta.inputType === 'contenteditable') {
-            const flexDiv = document.createElement('div'); flexDiv.className = 'controls'; flexDiv.style.flexDirection = 'column'; flexDiv.style.gap = '8px';
-            const aiInput = document.createElement('input'); aiInput.type = 'text'; aiInput.id = `ai-notes-${idx}`; aiInput.placeholder = 'Add notes for AI (optional)';
-            aiInput.style.cssText = 'padding: 8px 12px; border-radius: 8px; border: 1px solid #E5E5EA; background: #F2F2F7; font-size: 13px; outline: none; width: calc(100% - 24px);';
-            const btnRow = document.createElement('div'); btnRow.style.display = 'flex'; btnRow.style.gap = '8px';
-            const btnAi = document.createElement('button'); btnAi.className = 'btn-confirm'; btnAi.id = `btn-ai-${idx}`; btnAi.textContent = '✨ Generate with AI'; btnAi.style.background = '#5E5CE6';
-            const btnScroll = document.createElement('button'); btnScroll.className = 'btn-manual'; btnScroll.id = `btn-scroll-${idx}`; btnScroll.textContent = 'Scroll to field';
-            btnRow.appendChild(btnAi); btnRow.appendChild(btnScroll);
-            flexDiv.appendChild(aiInput); flexDiv.appendChild(btnRow);
-            controlsWrapper.appendChild(flexDiv);
-          } else {
-            const btnRow = document.createElement('div'); btnRow.className = 'controls';
-            const btnText = document.createElement('button'); btnText.className = 'btn-confirm'; btnText.id = `btn-text-${idx}`; btnText.textContent = 'Fill Data';
-            const btnScroll = document.createElement('button'); btnScroll.className = 'btn-manual'; btnScroll.id = `btn-scroll-${idx}`; btnScroll.textContent = 'Scroll to field';
-            btnRow.appendChild(btnText); btnRow.appendChild(btnScroll);
-            controlsWrapper.appendChild(btnRow);
+        const AI_CATEGORIES = ['ESSAY_QUESTION', 'COVER_LETTER_TEXT'];
+
+        // Standard buttons — every non-file card gets these
+        const innerControls = document.createElement('div'); innerControls.className = 'controls';
+        const btnManual = document.createElement('button'); btnManual.className = 'btn-manual'; btnManual.id = `btn-text-${idx}`; btnManual.textContent = 'Accept Suggestion';
+        const btnSkip = document.createElement('button'); btnSkip.className = 'btn-skip'; btnSkip.id = `btn-skip-${idx}`; btnSkip.textContent = 'Skip';
+        innerControls.appendChild(btnManual);
+        innerControls.appendChild(btnSkip);
+        controlsWrapper.appendChild(innerControls);
+
+        // AI section — hidden by default, revealed only when user picks an AI category
+        const aiSection = document.createElement('div'); aiSection.id = `ai-section-${idx}`; aiSection.style.cssText = 'display:none; flex-direction:column; gap:8px; margin-top:6px;';
+        const aiInput = document.createElement('input'); aiInput.type = 'text'; aiInput.id = `ai-notes-${idx}`; aiInput.placeholder = 'Add notes for AI (optional)';
+        aiInput.style.cssText = 'padding: 8px 12px; border-radius: 8px; border: 1px solid #E5E5EA; background: #F2F2F7; font-size: 13px; outline: none; width: calc(100% - 24px);';
+        const btnAi = document.createElement('button'); btnAi.className = 'btn-confirm'; btnAi.id = `btn-ai-${idx}`; btnAi.textContent = '✨ Generate with AI'; btnAi.style.background = '#5E5CE6';
+        aiSection.appendChild(aiInput);
+        aiSection.appendChild(btnAi);
+        controlsWrapper.appendChild(aiSection);
+
+        // Watch for category changes and toggle AI section visibility
+        setTimeout(() => {
+          const catInput = shadow.querySelector(`#select-cat-${idx}`);
+          if (catInput) {
+            const toggleAI = () => {
+              aiSection.style.display = AI_CATEGORIES.includes(catInput.value) ? 'flex' : 'none';
+            };
+            catInput.addEventListener('input', toggleAI);
+            toggleAI(); // run once in case it's already an AI category
           }
-        } else {
-          // Plain overlay field: Accept Suggestion + Skip
-          const innerControls = document.createElement('div'); innerControls.className = 'controls';
-          const btnManual = document.createElement('button'); btnManual.className = 'btn-manual'; btnManual.id = `btn-text-${idx}`; btnManual.textContent = 'Accept Suggestion';
-          const btnSkip = document.createElement('button'); btnSkip.className = 'btn-skip'; btnSkip.id = `btn-skip-${idx}`; btnSkip.textContent = 'Skip';
-          innerControls.appendChild(btnManual);
-          innerControls.appendChild(btnSkip);
-          controlsWrapper.appendChild(innerControls);
-        }
+        }, 50);
       }
 
       row.appendChild(previewDiv);
@@ -394,77 +398,75 @@ globalThis.ShadowOverlay = (function() {
       list.appendChild(row);
 
       setTimeout(() => {
-        if (f.classification.fillRoute === 'overlay_eeo' || f.classification.fillRoute === 'overlay_cover_letter') {
-          shadow.querySelector(`#btn-scroll-${idx}`)?.addEventListener('click', () => {
-            f.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            f.element.focus();
+        // Scroll-to-field button (present on all cards)
+        shadow.querySelector(`#btn-scroll-${idx}`)?.addEventListener('click', () => {
+          f.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          f.element.focus();
+        });
+
+        // Accept Suggestion button — marks field as accepted for Fill Confirmed
+        const acceptBtn = shadow.querySelector(`#btn-text-${idx}`);
+        if (acceptBtn) {
+          acceptBtn.addEventListener('click', () => {
+            const catInput = shadow.querySelector(`#select-cat-${idx}`);
+            if (catInput) {
+              catInput.setAttribute('data-accepted', 'true');
+              acceptBtn.textContent = 'Accepted ✓';
+              acceptBtn.style.background = '#34C759';
+              acceptBtn.style.color = '#fff';
+              acceptBtn.disabled = true;
+            }
           });
-          shadow.querySelector(`#btn-text-${idx}`)?.addEventListener('click', () => {
-            const select = shadow.querySelector(`#select-cat-${idx}`);
-            if (select) resolveRow({ action: 'fill_text', field: f, category: select.value });
+        }
+
+        // Skip button
+        const skipBtn = shadow.querySelector(`#btn-skip-${idx}`);
+        if (skipBtn) {
+          skipBtn.addEventListener('click', () => {
+            const catInput = shadow.querySelector(`#select-cat-${idx}`);
+            if (catInput) catInput.setAttribute('data-skipped', 'true');
+            skipBtn.innerText = 'Skipped';
+            skipBtn.style.background = '#ccc';
+            skipBtn.disabled = true;
           });
-          
-          const btnAI = shadow.querySelector(`#btn-ai-${idx}`);
-          if (btnAI) {
-            btnAI.addEventListener('click', async () => {
-              btnAI.innerText = 'Generating...';
-              btnAI.disabled = true;
-              const notes = shadow.querySelector(`#ai-notes-${idx}`).value;
-              const profile = await globalThis.ProfileStore.getProfile();
-              const questionText = f.fieldMeta.ariaLabelledby || f.fieldMeta.labelText || f.fieldMeta.placeholder || f.fieldMeta.surroundingText || 'Answer the question';
-              
-              chrome.runtime.sendMessage({
-                action: 'GENERATE_ESSAY',
-                profile: profile,
-                question: questionText,
-                notes: notes,
-                globalInstructions: profile.preferences?.aiInstructions || ''
-              }, (response) => {
-                if (response.error) {
-                  if (response.error === 'MISSING_API_KEY') {
-                    showAPIErrorModal();
-                  } else {
-                    showAPIErrorModal('AI Error: ' + response.error);
-                  }
-                  btnAI.textContent = '✦ Generate with AI';
-                  btnAI.disabled = false;
+        }
+
+        // Generate with AI button
+        const btnAI = shadow.querySelector(`#btn-ai-${idx}`);
+        if (btnAI) {
+          btnAI.addEventListener('click', async () => {
+            btnAI.innerText = 'Generating...';
+            btnAI.disabled = true;
+            const notes = shadow.querySelector(`#ai-notes-${idx}`)?.value || '';
+            const profile = await globalThis.ProfileStore.getProfile();
+            const questionText = f.fieldMeta.ariaLabelledby || f.fieldMeta.labelText || f.fieldMeta.placeholder || f.fieldMeta.surroundingText || 'Answer the question';
+            chrome.runtime.sendMessage({
+              action: 'GENERATE_ESSAY',
+              profile: profile,
+              question: questionText,
+              notes: notes,
+              globalInstructions: profile.preferences?.aiInstructions || ''
+            }, (response) => {
+              if (response.error) {
+                if (response.error === 'MISSING_API_KEY') {
+                  showAPIErrorModal();
                 } else {
-                  f.element.value = response.text;
-                  f.element.dispatchEvent(new Event('input', { bubbles: true }));
-                  f.element.dispatchEvent(new Event('change', { bubbles: true }));
-                  btnAI.textContent = '✓ Generated';
-                  btnAI.style.background = '#34C759';
-                  btnAI.disabled = false;
+                  showAPIErrorModal('AI Error: ' + response.error);
                 }
-              });
-            });
-          }
-        } else if (f.classification.fillRoute !== 'overlay_file') {
-          const skipBtn = shadow.querySelector(`#btn-skip-${idx}`);
-          if (skipBtn) {
-            skipBtn.addEventListener('click', () => {
-              const select = shadow.querySelector(`#select-cat-${idx}`);
-              if (select) select.setAttribute('data-skipped', 'true');
-              skipBtn.innerText = 'Skipped';
-              skipBtn.style.background = '#ccc';
-              skipBtn.disabled = true;
-            });
-          }
-          const acceptBtn = shadow.querySelector(`#btn-text-${idx}`);
-          if (acceptBtn) {
-            acceptBtn.addEventListener('click', () => {
-              const select = shadow.querySelector(`#select-cat-${idx}`);
-              if (select) {
-                // Mark as accepted so Fill Confirmed picks it up
-                select.setAttribute('data-accepted', 'true');
-                acceptBtn.textContent = 'Accepted ✓';
-                acceptBtn.style.background = '#34C759';
-                acceptBtn.style.color = '#fff';
-                acceptBtn.disabled = true;
+                btnAI.textContent = '✦ Generate with AI';
+                btnAI.disabled = false;
+              } else {
+                f.element.value = response.text;
+                f.element.dispatchEvent(new Event('input', { bubbles: true }));
+                f.element.dispatchEvent(new Event('change', { bubbles: true }));
+                btnAI.textContent = '✓ Generated';
+                btnAI.style.background = '#34C759';
+                btnAI.disabled = false;
               }
             });
-          }
+          });
         }
+
       }, 0);
     });
 

@@ -32,7 +32,7 @@ globalThis.FormMutationObserver = (function() {
         return;
       }
 
-      const newFields = [];
+      let hasNewFields = false;
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (node.nodeType !== Node.ELEMENT_NODE) continue;
@@ -52,7 +52,6 @@ globalThis.FormMutationObserver = (function() {
             const allNodes = root.querySelectorAll('*');
             for (const n of allNodes) {
               if (n.shadowRoot) {
-                // Also attach observer to new shadow roots
                 observer.observe(n.shadowRoot, { childList: true, subtree: true });
                 findFieldsInNode(n.shadowRoot);
               }
@@ -62,19 +61,15 @@ globalThis.FormMutationObserver = (function() {
           
           fields = fields.concat(nestedFields);
 
-          for (const field of fields) {
-            const extracted = await globalThis.FieldExtractor.extractField(field);
-            if (!observedFingerprints.has(extracted.fingerprint)) {
-              observedFingerprints.add(extracted.fingerprint);
-              newFields.push(extracted); 
-            }
+          if (fields.length > 0) {
+             hasNewFields = true;
           }
         }
       }
 
-      if (newFields.length > 0) {
+      if (hasNewFields) {
         resetIdleTimer();
-        debouncedRescan(newFields);
+        debouncedRescan('FULL');
       }
     });
 

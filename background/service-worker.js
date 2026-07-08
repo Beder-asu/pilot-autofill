@@ -75,7 +75,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const apiKey = res.aiApiKey || res.geminiApiKey;
       const provider = res.aiProvider || 'gemini';
       const model = res.aiModel || 'gemini-2.5-flash';
-      
+
       if (!apiKey) {
         sendResponse({ error: 'MISSING_API_KEY' });
         return;
@@ -111,11 +111,11 @@ ${request.question}
           const data = await response.json();
           if (data.error) throw new Error(data.error.message);
           text = data.candidates[0].content.parts[0].text.trim();
-          
+
         } else if (provider === 'openai') {
           const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
             method: 'POST',
-            headers: { 
+            headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${apiKey}`
             },
@@ -128,11 +128,11 @@ ${request.question}
           const data = await response.json();
           if (data.error) throw new Error(data.error.message);
           text = data.choices[0].message.content.trim();
-          
+
         } else if (provider === 'anthropic') {
           const response = await fetch(`https://api.anthropic.com/v1/messages`, {
             method: 'POST',
-            headers: { 
+            headers: {
               'Content-Type': 'application/json',
               'x-api-key': apiKey,
               'anthropic-version': '2023-06-01',
@@ -151,6 +151,70 @@ ${request.question}
         }
 
         sendResponse({ text });
+      } catch (e) {
+        sendResponse({ error: e.message });
+      }
+    });
+    return true;
+  }
+
+  if (request.action === 'CLASSIFY_FIELD') {
+    chrome.storage.local.get(['aiProvider', 'aiModel', 'aiApiKey', 'geminiApiKey'], async (res) => {
+      const apiKey = res.aiApiKey || res.geminiApiKey;
+      const provider = res.aiProvider || 'gemini';
+      const model = res.aiModel || 'gemini-2.5-flash';
+
+      if (!apiKey) {
+        sendResponse({ error: 'MISSING_API_KEY' });
+        return;
+      }
+      try {
+        const prompt = `You are an AI assistant helping to autofill web forms. 
+Given the following context about a form field, classify it into exactly ONE of the following categories:
+FIRST_NAME, LAST_NAME, EMAIL, PHONE, ADDRESS_LINE_1, CITY, STATE, ZIP, COUNTRY, LINKEDIN, PORTFOLIO, RESUME, COVER_LETTER_TEXT, ESSAY_QUESTION, YEARS_OF_EXPERIENCE, CURRENT_COMPANY, CURRENT_TITLE, GRADUATION_YEAR, DEGREE, UNIVERSITY, FIELD_OF_STUDY, GPA, NATIONAL_ID, GENDER, SALARY_EXPECTATION, START_DATE, LANGUAGES, SKILLS.
+If it doesn't match any, return UNKNOWN.
+
+Field Context:
+${request.context}
+
+Respond ONLY with the exact category name. Nothing else.`;
+
+        let category = 'UNKNOWN';
+
+        if (provider === 'gemini') {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.1 }
+            })
+          });
+          const data = await response.json();
+          if (data.error) throw new Error(data.error.message);
+          category = data.candidates[0].content.parts[0].text.trim();
+        } else if (provider === 'openai') {
+          const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: [{ role: 'user', content: prompt }],
+              temperature: 0.1
+            })
+          });
+          const data = await response.json();
+          if (data.error) throw new Error(data.error.message);
+          category = data.choices[0].message.content.trim();
+        }
+
+        // Clean up the output in case the LLM was chatty
+        category = category.replace(/[^A-Z_]/g, '');
+
+        sendResponse({ category });
       } catch (e) {
         sendResponse({ error: e.message });
       }
