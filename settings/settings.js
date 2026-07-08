@@ -314,30 +314,22 @@ document.getElementById('btn-resume-start').addEventListener('click', async () =
     const model = document.getElementById('aiModel').value;
     const parsed = await globalThis.ResumeParser.parseResume(fileData, apiKey, provider, model);
     
-    const setIfEmpty = (id, value) => {
-      if (!value) return;
-      const el = document.getElementById(id);
-      if (el && !el.value) {
-        el.value = value;
-      }
-    };
+    document.getElementById('firstName').value = parsed.personal.firstName || '';
+    document.getElementById('lastName').value = parsed.personal.lastName || '';
+    document.getElementById('email').value = parsed.personal.email || '';
+    document.getElementById('phone').value = parsed.personal.phone || '';
     
-    setIfEmpty('firstName', parsed.personal.firstName);
-    setIfEmpty('lastName', parsed.personal.lastName);
-    setIfEmpty('email', parsed.personal.email);
-    setIfEmpty('phone', parsed.personal.phone);
+    document.getElementById('linkedin').value = parsed.professional.linkedin || '';
+    document.getElementById('github').value = parsed.professional.github || '';
+    document.getElementById('portfolio').value = parsed.professional.portfolio || '';
+    document.getElementById('currentCompany').value = parsed.professional.currentCompany || '';
+    document.getElementById('currentTitle').value = parsed.professional.currentTitle || '';
+    document.getElementById('yearsOfExperience').value = parsed.professional.yearsOfExperience || '';
     
-    setIfEmpty('linkedin', parsed.professional.linkedin);
-    setIfEmpty('github', parsed.professional.github);
-    setIfEmpty('portfolio', parsed.professional.portfolio);
-    setIfEmpty('currentCompany', parsed.professional.currentCompany);
-    setIfEmpty('currentTitle', parsed.professional.currentTitle);
-    setIfEmpty('yearsOfExperience', parsed.professional.yearsOfExperience);
-    
-    setIfEmpty('university', parsed.education.university);
-    setIfEmpty('degree', parsed.education.degree);
-    setIfEmpty('fieldOfStudy', parsed.education.fieldOfStudy);
-    setIfEmpty('graduationYear', parsed.education.graduationYear);
+    document.getElementById('university').value = parsed.education.university || '';
+    document.getElementById('degree').value = parsed.education.degree || '';
+    document.getElementById('fieldOfStudy').value = parsed.education.fieldOfStudy || '';
+    document.getElementById('graduationYear').value = parsed.education.graduationYear || '';
     
     document.getElementById('resume-modal').style.display = 'none';
     
