@@ -89,24 +89,7 @@ globalThis.ShadowOverlay = (function() {
   }
   // ──────────────────────────────────────────────────────────────────────────
   
-  let ttPolicy = null;
-  if (window.trustedTypes && window.trustedTypes.createPolicy) {
-    try {
-      ttPolicy = window.trustedTypes.createPolicy('pilot-extension-overlay', {
-        createHTML: string => string
-      });
-    } catch (e) {
-      if (window.trustedTypes.getAttributeType) {
-        try {
-          ttPolicy = window.trustedTypes.createPolicy('default', { createHTML: string => string });
-        } catch (err) {}
-      }
-    }
-  }
 
-  function safeHTML(html) {
-    return ttPolicy ? ttPolicy.createHTML(html) : html;
-  }
 
   function init() {
     if (host) return;
