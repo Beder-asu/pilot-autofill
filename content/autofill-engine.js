@@ -64,7 +64,9 @@ globalThis.AutofillEngine = (function() {
 
   function getProfileValueForCategory(category, profile) {
     if (!profile) return '';
-    const eeoCategories = ['ETHNICITY', 'VETERAN_STATUS', 'DISABILITY_STATUS'];
+    // Defense in depth: these values must never reach the silent fill path,
+    // even if a classifier or routing regression marks one as autofillable.
+    const eeoCategories = ['GENDER', 'ETHNICITY', 'VETERAN_STATUS', 'DISABILITY_STATUS'];
     if (eeoCategories.includes(category)) return '';
 
     if (CATEGORY_MAP[category]) {
