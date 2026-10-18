@@ -1,78 +1,121 @@
-# <img src="https://api.iconify.design/mdi:rocket-launch.svg?color=%23007AFF" width="28" height="28" align="bottom"> Pilot Autofill
+# Pilot Autofill
 
-**The smartest, most resilient job application autofill extension.**
+Pilot is a local-first Chrome extension for reviewing and filling job-application
+forms. It combines accessibility semantics, bilingual field classification, and
+framework-aware input handling instead of relying on one site's CSS structure.
 
-Pilot Autofill isn't just another form filler. It's a deep-DOM traversing, React-aware, AI-powered assistant designed to conquer the most notoriously difficult job application portals on the web (Workday, Greenhouse, Microsoft Forms, and more).
+> Development prototype. Pilot is not published in the Chrome Web Store, and
+> compatibility varies across application platforms.
 
----
+## What is implemented
 
-## <img src="https://api.iconify.design/mdi:book-open-page-variant.svg?color=%231D1D1F" width="24" height="24" align="bottom"> The Journey: How We Got Here
+- Accessibility-first extraction using labels, ARIA relationships, fieldsets,
+  native controls, and open Shadow DOM roots.
+- A semantic fallback parser for forms with incomplete accessibility metadata.
+- English and Arabic rule-based classification with confidence bands.
+- Separate native and React-aware filling strategies.
+- A review overlay for ambiguous, file, essay, and sensitive EEO fields.
+- Local profile and PDF storage, including resume-to-profile parsing.
+- Optional direct integration with Gemini, OpenAI, or Anthropic using the
+  user's own API key.
+- Local field-metadata collection with opt-in cloud sharing for a future
+  learned classifier.
 
-Building a universal form filler is hard. Modern web applications don't use standard HTML forms anymore. They use heavily nested `<div>` structures, virtual DOMs, Shadow DOMs, and synthetic event systems that actively block programmatic interaction.
+## Why the architecture changed
 
-We tried multiple approaches:
-1. **Input-First (Archived):** We tried finding inputs and scanning backwards for labels. It failed on CSS grids and complex layouts where the visual label was detached from the input.
-2. **Question-First (Archived):** We tried finding text questions and scanning forwards for inputs. It failed on Shadow DOMs and grouped radio buttons.
-3. **a11y-first (This Branch - The Winner):** We stopped looking at visual layout and started looking at the **Accessibility Tree**. By utilizing ARIA attributes (`aria-labelledby`, `aria-label`) and falling back to a custom Semantic Parser, we achieved near-perfect field mapping across the most hostile modern web frameworks.
+Pilot reached its current design through three explicit experiments retained in
+the repository history:
 
----
+1. **Input-First** scanned controls individually. It worked on simple forms but
+   fragmented radio and checkbox questions and gathered noisy context.
+2. **Question-First** grouped controls by surrounding containers. It improved
+   multi-choice handling but depended on brittle, platform-specific DOM and CSS
+   structures.
+3. **A11y-First** uses accessibility relationships as the primary structure and
+   falls back to semantic control scanning. This is the current `main` design.
 
-## <img src="https://api.iconify.design/mdi:creation.svg?color=%231D1D1F" width="24" height="24" align="bottom"> Core Features
+The `Input-First` and `question-first` branches preserve the earlier approaches
+and their retrospectives. They are design evidence, not alternative releases.
 
-- <img src="https://api.iconify.design/mdi:brain.svg?color=%23007AFF" width="18" height="18" align="bottom"> **Dual-Parser Engine:** Combines an Accessibility Parser (for modern, ARIA-compliant forms) with a Semantic Fallback Parser (for legacy forms).
-- <img src="https://api.iconify.design/mdi:shield-check.svg?color=%2334C759" width="18" height="18" align="bottom"> **React & Framework Defeater:** Modern React apps ignore `.value = "x"`. Pilot Autofill intercepts native setters and dispatches raw `PointerEvent` and `MouseEvent` synthetic events to simulate real human interaction.
-- <img src="https://api.iconify.design/mdi:flashlight.svg?color=%23FF9500" width="18" height="18" align="bottom"> **Shadow DOM Piercing:** Seamlessly enters closed/open Shadow Roots to find and fill inputs that other extensions can't even see.
-- <img src="https://api.iconify.design/mdi:earth.svg?color=%235AC8FA" width="18" height="18" align="bottom"> **Bilingual Classification:** Understands both English and Arabic form fields with a highly tuned alias dictionary.
-- <img src="https://api.iconify.design/mdi:robot-outline.svg?color=%235E5CE6" width="18" height="18" align="bottom"> **AI Essay Generation:** Integrated directly with Gemini & OpenAI to read essay questions (e.g., "Why do you want to work here?") and generate tailored answers on the fly based on your profile.
+## Pipeline
 
----
+```text
+page controls
+    -> A11yParser
+    -> SemanticParser fallback
+    -> RuleBasedClassifier
+    -> confidence and safety routing
+       -> direct fill
+       -> review overlay
+       -> file selection
+       -> manual/AI-assisted essay review
+```
 
-## <img src="https://api.iconify.design/mdi:tools.svg?color=%231D1D1F" width="24" height="24" align="bottom"> Getting Started (Installation)
+The extension deliberately blocks sensitive EEO values from the silent fill
+path. Gender, ethnicity, veteran status, and disability status always require
+explicit review. File fields and low-confidence classifications are also never
+silently submitted.
 
-Pilot Autofill is a Chrome Extension. To install it locally for development:
+## Install locally
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Beder-asu/pilot-autofill.git
-   cd pilot-autofill/Extension
-   ```
-2. **Open Chrome Extensions:**
-   Navigate to `chrome://extensions/` in your browser.
-3. **Enable Developer Mode:**
-   Toggle the "Developer mode" switch in the top right corner.
-4. **Load the Extension:**
-   Click **"Load unpacked"** and select the `Extension` folder you just cloned.
+1. Clone this repository.
+2. Open `chrome://extensions` in Chrome.
+3. Enable **Developer mode**.
+4. Choose **Load unpacked** and select the repository root.
+5. Open Pilot's settings page and create a local profile.
 
----
+No build step is required. AI features are optional; when enabled, requests are
+sent directly to the selected provider with the API key stored in Chrome local
+storage.
 
-## <img src="https://api.iconify.design/mdi:bullseye-arrow.svg?color=%231D1D1F" width="24" height="24" align="bottom"> How to Use It
+## Verify the code
 
-### Step 1: Set Up Your Profile
-1. Click the Pilot Autofill icon in your Chrome toolbar.
-2. Open the **Settings** page.
-3. Fill out your structured profile (Personal Info, Education, Experience, Links).
-4. Go to the **AI Model** tab, enter your Gemini or OpenAI API key, and select a model (we recommend `gemini-3.1-flash-lite` for the best free-tier quota).
-5. **Save** your profile.
+Node.js 20 or newer is required only for repository checks:
 
-### Step 2: AutoFill a Form
-1. Navigate to any job application form (e.g., a Greenhouse application or Microsoft Form).
-2. You'll see a floating **"AutoFill"** button injected into the page.
-3. Click it! The extension will scan the DOM, pierce shadow roots, and classify every field.
+```bash
+npm ci
+npm run check
+npm test
+```
 
-### Step 3: The Review Panel
-High-confidence fields (like First Name, Email, Phone) are filled instantly. For complex or ambiguous fields, the beautiful **Review Panel** slides in.
+The dependency-free suite verifies classifier behavior, English and Arabic
+labels, explicit review routing, disabled-field handling, and the hard EEO
+safety boundary. GitHub Actions runs the same checks on every push and pull
+request.
 
-- **Accept / Skip:** Quickly review the AI's suggestions and accept or skip them.
-- **Generate with AI:** For essay questions or cover letters, simply select the `ESSAY_QUESTION` category from the dropdown, add any custom notes (optional), and click **Generate with AI**. The extension will write the essay based on your profile and inject it into the text box.
-- **Fill Confirmed:** Once you're happy with the panel, click Fill Confirmed to dispatch the final events and complete the form.
+## Privacy and permissions
 
----
+The profile, uploaded files, and provider API key are stored locally by the
+extension. Pilot requests access to all URLs because job applications can be
+hosted on arbitrary domains; that broad permission deserves explicit review
+before any store release.
 
-## <img src="https://api.iconify.design/mdi:domain.svg?color=%231D1D1F" width="24" height="24" align="bottom"> Technical Architecture
+Classification metadata is recorded locally. Cloud sharing is disabled by
+default and requires an explicit confirmation. Shared records may contain field
+labels, surrounding question text, classification outcomes, and the site
+hostname, but not the values Pilot fills into the form. The cloud sync service
+is an experimental Phase 2 component and is not required for autofill.
 
-Under the hood, Pilot Autofill operates in distinct phases:
+## Known limitations
 
-1. **Extraction:** `A11yParser` and `SemanticParser` traverse the DOM, returning structured `FieldMeta` objects containing labels, placeholders, attributes, and precise bounding boxes.
-2. **Classification:** The `RuleBasedClassifier` runs regex pre-passes, normalizes camelCase IDs, and scores fields against a bilingual alias dictionary. Results are cached per-session.
-3. **Execution:** The `AutofillEngine` coordinates with the `FillerFactory` to instantiate either a `NativeFiller` (for plain HTML) or a `ReactFiller` (for SPAs) to safely inject data without breaking page state.
-4. **UI Overlay:** A completely isolated Shadow DOM overlay hosts the Review Panel, preventing the host page's CSS from breaking the extension's UI.
+- Browser JavaScript can traverse open Shadow DOM roots, not closed roots.
+- Synthetic events cannot guarantee compatibility with every framework or
+  anti-automation check.
+- There is no published accuracy benchmark yet; claims such as “near-perfect”
+  are intentionally avoided.
+- The existing Microsoft Forms script is an exploratory DOM probe, not an
+  automated regression test.
+- Cloud dataset infrastructure still needs a separate security and deployment
+  review before it should be presented as production-ready.
+
+## Repository map
+
+```text
+background/       service worker, provider calls, optional dataset sync
+content/          parsers, classification, fill strategies, and review overlay
+popup/            page controls and metadata-sharing preference
+settings/         profile, files, and optional AI configuration
+storage/          Chrome storage, IndexedDB, and resume parsing
+tests/            dependency-free regression tests
+scripts/          repository and Manifest V3 validation
+```
