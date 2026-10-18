@@ -83,6 +83,10 @@ labels, explicit review routing, disabled-field handling, and the hard EEO
 safety boundary. GitHub Actions runs the same checks on every push and pull
 request.
 
+The [live compatibility evidence](TESTING.md) records a synthetic-data,
+non-submitting run against real Google Forms, Microsoft Forms, and application
+pages. It includes failures and unavailable pages as well as successful fills.
+
 ## Privacy and permissions
 
 The profile, uploaded files, and provider API key are stored locally by the
@@ -103,8 +107,9 @@ is an experimental Phase 2 component and is not required for autofill.
   anti-automation check.
 - There is no published accuracy benchmark yet; claims such as “near-perfect”
   are intentionally avoided.
-- The existing Microsoft Forms script is an exploratory DOM probe, not an
-  automated regression test.
+- The live compatibility matrix exercises the core page runtime, but extension
+  popup, service-worker, and review-panel interaction still need browser-level
+  automation.
 - Cloud dataset infrastructure still needs a separate security and deployment
   review before it should be presented as production-ready.
 

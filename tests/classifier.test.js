@@ -94,6 +94,38 @@ test('routes an unknown textarea through essay review instead of autofill', () =
   assert.equal(result.fillRoute, 'overlay_cover_letter');
 });
 
+test('treats a degree-granting institution prompt as university', () => {
+  const result = globalThis.RuleBasedClassifier.classify(
+    field({
+      labelText: 'Name of the institution where you received your highest degree',
+    }),
+  );
+
+  assert.equal(result.assignedCategory, 'UNIVERSITY');
+  assert.equal(result.fillRoute, 'autofill');
+});
+
+test('requires review for a specific degree-title prompt', () => {
+  const result = globalThis.RuleBasedClassifier.classify(
+    field({ labelText: 'What is the specific title of your degree (e.g., BS in CS)?' }),
+  );
+
+  assert.equal(result.assignedCategory, 'DEGREE');
+  assert.equal(result.fillRoute, 'overlay');
+});
+
+test('does not confuse a job-department preference with academic faculty', () => {
+  const result = globalThis.RuleBasedClassifier.classify(
+    field({
+      inputType: 'radio-group',
+      labelText: 'Department Preference 1 Single choice.',
+    }),
+  );
+
+  assert.equal(result.assignedCategory, 'UNKNOWN');
+  assert.equal(result.fillRoute, 'overlay');
+});
+
 test('disabled fields are rejected before a filler is requested', async () => {
   const result = await globalThis.AutofillEngine.fillField(
     { disabled: true },
