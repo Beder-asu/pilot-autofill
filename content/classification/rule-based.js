@@ -262,6 +262,39 @@ globalThis.RuleBasedClassifier = (function() {
       return buildResult(fieldMeta, 'RESUME', 1.0, 'HIGH', 'overlay_file');
     }
 
+    // Contextual disambiguation for phrases where a single generic alias is
+    // actively misleading. Keep these narrow: false positives here can place
+    // a valid profile value in the wrong application question.
+    const questionText = [
+      fieldMeta.labelText,
+      fieldMeta.ariaLabel,
+      fieldMeta.ariaLabelledby,
+      fieldMeta.placeholder
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .replace(/[^\w\s\u0600-\u06FF]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // A job-department preference is not the applicant's academic faculty.
+    if (/\bdepartment\s+preference\b/.test(questionText)) {
+      return buildResult(fieldMeta, 'UNKNOWN', 0, 'UNKNOWN', 'overlay');
+    }
+
+    // "Institution ... degree" asks where somebody studied, not which degree
+    // they earned. This wording appears frequently in ATS forms.
+    if (/\b(institution|university|college|school)\b.*\bdegree\b/.test(questionText)) {
+      return buildResult(fieldMeta, 'UNIVERSITY', 0.95, 'HIGH', 'autofill');
+    }
+
+    // A degree title can contain a specialization that is not represented by
+    // the coarse saved degree value. Classify it correctly but require review.
+    if (/\b(title|name)\s+of\s+(your|the)\s+degree\b/.test(questionText)) {
+      return buildResult(fieldMeta, 'DEGREE', 0.75, 'MEDIUM', 'overlay');
+    }
+
     // ── Regex pre-pass ──────────────────────────────────────────────────────
     const testValues = [fieldMeta.placeholder, fieldMeta.value].filter(Boolean);
     for (const { pattern, category } of REGEX_RULES) {
