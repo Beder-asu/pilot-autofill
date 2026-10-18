@@ -7,6 +7,24 @@ framework-aware input handling instead of relying on one site's CSS structure.
 > Development prototype. Pilot is not published in the Chrome Web Store, and
 > compatibility varies across application platforms.
 
+## Product walkthrough
+
+These screenshots use a synthetic profile on public forms. Pilot filled only
+the fields it classified confidently, routed sensitive or ambiguous fields to
+the review panel, and did not submit either form.
+
+### Local profile
+
+![Pilot settings populated with a synthetic applicant profile](docs/screenshots/pilot-profile-settings.png)
+
+### Review-first autofill on Microsoft Forms
+
+![Pilot filling an internship form while keeping ambiguous choices in the review panel](docs/screenshots/pilot-orange-review.png)
+
+### Sensitive-field review on Google Forms
+
+![Pilot keeping veteran and disability questions in an explicit review panel](docs/screenshots/pilot-google-safety-review.png)
+
 ## What is implemented
 
 - Accessibility-first extraction using labels, ARIA relationships, fieldsets,
